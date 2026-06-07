@@ -31,6 +31,7 @@ The dataset includes:
 - Comment-level anger classification results
 
 Due to platform policies and research ethics, raw video files and user comments are not publicly released in this repository.
+Row-level processed files containing video IDs, author names, titles, local frame paths, or other platform-level identifiers are also excluded. This repository publishes aggregate result tables and figures for methodological transparency.
 
 ## Method
 
@@ -54,8 +55,10 @@ These findings suggest that emotional responses in short video comment sections 
 .
 ├── README.md
 ├── data/
+│   ├── raw/
 │   └── processed/
 ├── scripts/
+│   ├── crawler/
 │   ├── frame_extraction/
 │   ├── frame_classification/
 │   ├── anger_detection/
@@ -64,3 +67,8 @@ These findings suggest that emotional responses in short video comment sections 
 │   ├── tables/
 │   └── figures/
 └── docs/
+```
+
+## Notes
+
+Raw videos, comments, extracted frames, local paths, and row-level video records are not included. The public-facing materials are the analysis scripts, aggregate tables, figures, reports, and manuscript files.

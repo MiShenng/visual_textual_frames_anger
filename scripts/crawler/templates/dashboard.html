@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Short Video Crawler</title>
+    <style>
+      :root {
+        --bg: #f4f1e8;
+        --panel: #fffef9;
+        --ink: #182126;
+        --muted: #6b7280;
+        --accent: #c44d2d;
+        --line: #d7d1c6;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Iowan Old Style", "Palatino Linotype", serif;
+        background:
+          radial-gradient(circle at top left, #f8cfa6 0, rgba(248, 207, 166, 0.2) 30%, transparent 55%),
+          linear-gradient(180deg, #f4f1e8, #ebe5d8);
+        color: var(--ink);
+      }
+      .wrap {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+      .hero {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+      .panel, .card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        padding: 18px;
+        box-shadow: 0 10px 30px rgba(24, 33, 38, 0.06);
+      }
+      .hero h1 {
+        margin: 0 0 8px;
+        font-size: 42px;
+        line-height: 1;
+      }
+      .hero p {
+        color: var(--muted);
+        margin: 0;
+        font-size: 16px;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+      }
+      .stat {
+        background: #f8f5ee;
+        border-radius: 16px;
+        padding: 14px;
+      }
+      .stat small {
+        display: block;
+        color: var(--muted);
+        margin-bottom: 6px;
+      }
+      .stat strong {
+        font-size: 28px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 16px;
+      }
+      .cards {
+        display: grid;
+        gap: 12px;
+      }
+      .card h3, .panel h2 {
+        margin: 0 0 10px;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      form {
+        display: grid;
+        gap: 10px;
+      }
+      input, select, textarea, button {
+        width: 100%;
+        border-radius: 12px;
+        border: 1px solid var(--line);
+        padding: 10px 12px;
+        font: inherit;
+        background: white;
+      }
+      button {
+        background: var(--accent);
+        color: white;
+        border: none;
+        cursor: pointer;
+      }
+      .list {
+        display: grid;
+        gap: 10px;
+      }
+      .item {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 12px;
+        background: #fffdfa;
+      }
+      .item strong {
+        display: block;
+        margin-bottom: 6px;
+      }
+      details {
+        background: var(--panel);
+        border: 1px dashed var(--line);
+        border-radius: 18px;
+        padding: 12px 16px;
+      }
+      summary {
+        cursor: pointer;
+        font-weight: 700;
+      }
+      .meta {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 8px;
+      }
+      .tag {
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        padding: 2px 10px;
+        font-size: 12px;
+        color: var(--muted);
+        background: #f8f5ee;
+      }
+      @media (max-width: 900px) {
+        .hero, .grid, .grid-3 { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <section class="hero">
+        <div class="panel">
+          <h1>Douyin-First Crawler</h1>
+          <p>关键词、标签、一级评论和二级回复的任务化抓取面板。首版优先把抓取链路做强，界面保持简单可用。</p>
+        </div>
+        <div class="panel stats">
+          <div class="stat"><small>任务</small><strong>{{ stats.jobs }}</strong></div>
+          <div class="stat"><small>视频</small><strong>{{ stats.videos }}</strong></div>
+          <div class="stat"><small>评论</small><strong>{{ stats.comments }}</strong></div>
+        </div>
+      </section>
+
+      <section class="grid">
+        <div class="panel">
+          <h2>创建搜索任务</h2>
+          <p class="muted">主流程只需要从这里开始。系统会在搜到视频后自动继续抓该批视频的一级评论和二级回复。</p>
+          <form method="post" action="/ui/jobs/search">
+            <select name="platform">
+              {% for platform in platforms %}
+              <option value="{{ platform.value }}">{{ platform.value }}</option>
+              {% endfor %}
+            </select>
+            <select name="query_type">
+              {% for query_type in query_types %}
+              <option value="{{ query_type.value }}">{{ query_type.value }}</option>
+              {% endfor %}
+            </select>
+            <input name="query" placeholder="输入关键词或标签">
+            <input name="start_time" placeholder="起始时间，可选：2025-01-01 或 2025-01-01T00:00:00+08:00">
+            <input name="end_time" placeholder="结束时间，可选：2025-03-01">
+            <input name="time_range" placeholder="兼容旧格式，可选：2024-01-01:2024-03-01">
+            <input name="limit" type="number" value="100">
+            <button type="submit">立即抓取</button>
+          </form>
+        </div>
+
+        <details>
+          <summary>补抓评论（高级/失败补救）</summary>
+          <p class="muted">只有在某批视频评论抓失败，或者你已经有现成 `video_id` 列表时，才需要手动用这个入口。</p>
+          <form method="post" action="/ui/jobs/comments" style="margin-top: 10px;">
+            <select name="platform">
+              {% for platform in platforms %}
+              <option value="{{ platform.value }}">{{ platform.value }}</option>
+              {% endfor %}
+            </select>
+            <textarea name="video_ids" rows="5" placeholder="逗号分隔 video_id 列表"></textarea>
+            <button type="submit">补抓评论与回复</button>
+          </form>
+        </details>
+      </section>
+
+      <section class="grid" style="margin-top: 16px;">
+        <div class="panel">
+          <h2>最近任务</h2>
+          <div class="cards">
+            {% for job in jobs %}
+            <div class="item">
+              <strong>#{{ job.id }} · {{ job.job_type.value }} · {{ job.platform.value }}</strong>
+              <div class="muted">状态：{{ job.status.value }}</div>
+              <div class="muted">query={{ job.query or "-" }} / limit={{ job.limit or "-" }}</div>
+            </div>
+            {% else %}
+            <div class="item muted">还没有任务</div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>视频卡片</h2>
+          <div class="cards">
+            {% for video in videos %}
+            <div class="item">
+              <strong>{{ video.title or video.platform_video_id }}</strong>
+              <div class="muted">{{ video.platform.value }} · {{ video.author_name or "unknown author" }}</div>
+              <div class="muted">下载：{{ video.download_url or "-" }}</div>
+            </div>
+            {% else %}
+            <div class="item muted">还没有视频结果</div>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
+
+      <section class="grid-3" style="margin-top: 16px;">
+        <div class="panel">
+          <h2>登录态管理</h2>
+          <p class="muted">这里不是填账号密码。这里管理的是浏览器登录态文件。Playwright 的作用是带着这份“已登录浏览器状态”去访问抖音，比单独填 cookie 更稳。</p>
+          <form method="post" action="/ui/accounts/import">
+            <select name="platform">
+              {% for platform in platforms %}
+              <option value="{{ platform.value }}">{{ platform.value }}</option>
+              {% endfor %}
+            </select>
+            <input name="label" placeholder="账号标签，如 douyin-main">
+            <input name="state_file" placeholder="playwright_states/douyin-main.json">
+            <button type="submit">导入账号</button>
+          </form>
+          <div class="cards" style="margin-top: 12px;">
+            {% for account in accounts %}
+            <div class="item">
+              <strong>{{ account.label }}</strong>
+              <div class="muted">{{ account.platform.value }} · {{ account.status.value }}</div>
+              <div class="muted">{{ account.login_state_path }}</div>
+            </div>
+            {% else %}
+            <div class="item muted">还没有登录态。先运行 `python -m app.cli.main accounts capture-douyin --label main`。</div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>代理管理</h2>
+          <p class="muted">先导入，再验证，再让系统使用。公开免费代理只适合冷启动和测试，不适合长期稳定生产。</p>
+          <form method="post" action="/ui/proxies/import">
+            <input name="label" placeholder="代理标签，如 manual-proxy-1">
+            <input name="proxy_url" placeholder="http://user:pass@host:port">
+            <button type="submit">导入代理</button>
+          </form>
+          <form method="post" action="/ui/proxies/import-source" style="margin-top: 10px;">
+            <select name="source_name">
+              {% for source in proxy_sources %}
+              <option value="{{ source.name }}">{{ source.name }} · {{ source.description }}</option>
+              {% endfor %}
+            </select>
+            <input name="limit" type="number" value="100" min="1" max="5000">
+            <button type="submit">从 GitHub 代理源导入</button>
+          </form>
+          <form method="post" action="/ui/proxies/import-ipproxypool" style="margin-top: 10px;">
+            <input name="base_url" value="{{ ipproxypool_defaults.base_url }}" placeholder="IPProxyPool 地址，如 http://127.0.0.1:8000">
+            <div class="grid" style="grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;">
+              <input name="limit" type="number" value="{{ ipproxypool_defaults.limit or 100 }}" min="1" max="5000" placeholder="数量">
+              <select name="types">
+                <option value="0" {% if ipproxypool_defaults.types == 0 %}selected{% endif %}>高匿</option>
+                <option value="1" {% if ipproxypool_defaults.types == 1 %}selected{% endif %}>匿名</option>
+                <option value="2" {% if ipproxypool_defaults.types == 2 %}selected{% endif %}>透明</option>
+              </select>
+              <select name="protocol">
+                <option value="0" {% if ipproxypool_defaults.protocol == 0 %}selected{% endif %}>HTTP</option>
+                <option value="1" {% if ipproxypool_defaults.protocol == 1 %}selected{% endif %}>HTTPS</option>
+                <option value="2" {% if ipproxypool_defaults.protocol == 2 %}selected{% endif %}>HTTP/HTTPS</option>
+              </select>
+              <input name="country" value="{{ ipproxypool_defaults.country }}" placeholder="国家，可选：国内/国外">
+              <input name="area" value="{{ ipproxypool_defaults.area }}" placeholder="地区，可选">
+            </div>
+            <button type="submit">从 IPProxyPool 导入</button>
+          </form>
+          <form method="post" action="/ui/proxies/validate" style="margin-top: 10px;">
+            <input name="limit" type="number" value="50" min="1" max="5000">
+            <button type="submit">验证前 N 条代理</button>
+          </form>
+          <form method="post" action="/ui/proxies/cleanup" style="margin-top: 10px;">
+            <button type="submit">清理失效代理</button>
+          </form>
+          <div class="cards" style="margin-top: 12px;">
+            {% for proxy in proxies %}
+            <div class="item">
+              <strong>{{ proxy.label }}</strong>
+              <div class="meta">
+                <span class="tag">来源：{{ proxy.source_name or "unknown" }}</span>
+                <span class="tag">状态：{{ proxy.status }}</span>
+                <span class="tag">失败：{{ proxy.failure_count }}</span>
+              </div>
+              <div class="muted">{{ proxy.proxy_url }}</div>
+              <div class="muted">最近检查：{{ proxy.last_checked_at or "-" }}</div>
+              <div class="muted">最近成功：{{ proxy.last_success_at or "-" }}</div>
+            </div>
+            {% else %}
+            <div class="item muted">还没有代理</div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>数据导出</h2>
+          <div class="cards">
+            <a class="item" href="/export/videos.csv" style="text-decoration:none;color:inherit;">
+              <strong>导出视频 CSV</strong>
+              <div class="muted">当前视频主表导出</div>
+            </a>
+            <a class="item" href="/export/comments.csv" style="text-decoration:none;color:inherit;">
+              <strong>导出评论 CSV</strong>
+              <div class="muted">一级评论与二级回复导出</div>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid" style="margin-top: 16px;">
+        <div class="panel">
+          <h2>最新评论卡片</h2>
+          <div class="list">
+            {% for comment in comments %}
+            <div class="item">
+              <strong>L{{ comment.level }} · {{ comment.author_name or "anonymous" }}</strong>
+              <div>{{ comment.text }}</div>
+              <div class="muted">video_id={{ comment.video_id }} · like={{ comment.like_count or 0 }}</div>
+            </div>
+            {% else %}
+            <div class="item muted">还没有评论结果</div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>系统事件</h2>
+          <div class="list">
+            {% for event in events %}
+            <div class="item">
+              <strong>{{ event.event_type }}</strong>
+              <div>{{ event.message }}</div>
+              <div class="muted">{{ event.level }} · job={{ event.job_id or "-" }}</div>
+            </div>
+            {% else %}
+            <div class="item muted">还没有事件</div>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
+    </div>
+  </body>
+ </html>

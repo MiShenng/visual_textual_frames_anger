@@ -1,0 +1,12 @@
+﻿variable,category,count,share
+platform,douyin,468,1.0
+visual_main_arousal_label,缓释,206,0.44017094017094016
+visual_main_arousal_label,说明,193,0.41239316239316237
+visual_main_arousal_label,煽动,69,0.14743589743589744
+text_arousal_label,缓释,275,0.5876068376068376
+text_arousal_label,说明,114,0.24358974358974358
+text_arousal_label,煽动,79,0.16880341880341881
+text_arousal_confidence,high,400,0.8547008547008547
+text_arousal_confidence,medium,68,0.1452991452991453
+high_anger_flag,0,456,0.9743589743589743
+high_anger_flag,1,12,0.02564102564102564

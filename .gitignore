@@ -1,0 +1,45 @@
+.DS_Store
+._*
+
+# Local raw materials are not for public GitHub release.
+data/raw/*
+!data/raw/README.md
+
+# Row-level processed data are local/restricted only.
+data/processed/*
+!data/processed/README.md
+results/tables/top30_videos_by_anger_rate.csv
+
+# Credentials and local runtime files
+.env
+*.log
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+outputs/
+
+# Crawler runtime artifacts
+scripts/crawler/.env
+scripts/crawler/crawler.sqlite3
+scripts/crawler/*.db
+scripts/crawler/data/
+scripts/crawler/logs/
+scripts/crawler/playwright_states/
+scripts/crawler/browser_profiles/
+scripts/crawler/3.21comment_data/
+scripts/crawler/3.21video_data/
+scripts/crawler/short_video_crawler.egg-info/
+
+# Model/checkpoint artifacts
+artifacts/
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+
+# Large binary intermediates
+*.parquet
+*.mp4
+*.mov
+*.avi

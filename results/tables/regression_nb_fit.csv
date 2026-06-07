@@ -1,0 +1,2 @@
+"model","n","aic","theta","logLik"
+"Negative Binomial (anger_count with log(comment_count_effective) offset)",461,3238.16281654342,3.10869307941165,-1605.08140827171

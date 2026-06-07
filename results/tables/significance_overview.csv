@@ -1,0 +1,7 @@
+"test","statistic","df","p_value"
+"Kruskal-Wallis: anger_rate ~ visual_main_arousal_label",44.9497382710464,2,1.73495555163633e-10
+"Kruskal-Wallis: anger_rate ~ text_arousal_label",17.6747070798111,2,0.000145206521901468
+"ANOVA: anger_rate ~ visual_main_arousal_label",20.6315081703983,2,2.60222293566029e-09
+"ANOVA: anger_rate ~ text_arousal_label",8.48802339169075,2,0.000239548361686959
+"Chi-square: visual_main_arousal_label x text_arousal_label",51.3610415297959,4,1.87622898772769e-10
+"Spearman: comment_count_effective vs anger_rate",7848594.25939478,NA,7.20090396260182e-37

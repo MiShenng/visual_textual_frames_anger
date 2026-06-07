@@ -1,0 +1,39 @@
+api:
+  api_key: "${QWEN_API_KEY}"
+  api_url: "https://dashscope.aliyuncs.com/compatible-mode/v1"
+  text_model: "qwen3.5-flash"
+  request_timeout_seconds: 120
+  max_retries: 5
+  retry_backoff_seconds: 3
+  text_concurrency: 16
+  enable_thinking: false
+  max_completion_tokens: 2000
+
+input:
+  reference_csv_path: "data/processed/video_level_final_449.csv"
+  transcript_summary_path: "data/raw/transcripts_source/视频语音转录汇总_480.csv"
+  ocr_text_table_path: "outputs/frame_classification/visual/tables/video_level_text_codes_with_ocr.csv"
+
+output:
+  output_dir: "outputs/frame_classification/textual"
+
+coding:
+  text_system_prompt_path: "./prompts/text_system_prompt.txt"
+  narrative_labels:
+    - "支持"
+    - "反对"
+    - "中立"
+  arousal_labels:
+    - "煽动"
+    - "说明"
+    - "缓释"
+  confidence_labels:
+    - "low"
+    - "medium"
+    - "high"
+  narrative_aliases: {}
+  arousal_aliases: {}
+  confidence_aliases: {}
+
+pipeline:
+  overwrite_existing: false

@@ -1,0 +1,7 @@
+"group_1","group_2","p_value_holm","dimension"
+"缓释","说明",6.65843371489001e-09,"visual_main_arousal_label"
+"煽动","说明",0.595183175270384,"visual_main_arousal_label"
+"煽动","缓释",1.18544474765256e-06,"visual_main_arousal_label"
+"缓释","说明",0.00732940250497719,"text_arousal_label"
+"煽动","说明",0.242338187067713,"text_arousal_label"
+"煽动","缓释",0.000739653557059446,"text_arousal_label"

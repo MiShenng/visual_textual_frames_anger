@@ -1,0 +1,17 @@
+[Unit]
+Description=Short Video Crawler API
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/crawler_app
+EnvironmentFile=/home/ubuntu/crawler_app/.env
+ExecStart=/home/ubuntu/crawler_app/.venv/bin/python -m app.cli.main serve --host 0.0.0.0 --port 8080
+StandardOutput=append:/home/ubuntu/crawler_app/crawler.log
+StandardError=append:/home/ubuntu/crawler_app/crawler.log
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
