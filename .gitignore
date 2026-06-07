@@ -8,6 +8,10 @@ data/raw/*
 # Row-level processed data are local/restricted only.
 data/processed/*
 !data/processed/README.md
+!data/processed/video_level_processed_public_449.csv
+!data/processed/comment_anger_video_summary_public_461.csv
+!data/processed/text_samples_public_index.csv
+!data/processed/visual_samples_public_index.csv
 results/tables/top30_videos_by_anger_rate.csv
 
 # Credentials and local runtime files

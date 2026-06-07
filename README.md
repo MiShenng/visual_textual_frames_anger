@@ -31,7 +31,7 @@ The dataset includes:
 - Comment-level anger classification results
 
 Due to platform policies and research ethics, raw video files and user comments are not publicly released in this repository.
-Row-level processed files containing video IDs, author names, titles, local frame paths, or other platform-level identifiers are also excluded. This repository publishes aggregate result tables and figures for methodological transparency.
+Identifiable processed files containing platform video IDs, author names, titles, local frame paths, or other platform-level identifiers are excluded. This repository publishes de-identified processed data, aggregate result tables, and figures for methodological transparency.
 
 ## Method
 
