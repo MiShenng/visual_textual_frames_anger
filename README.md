@@ -59,6 +59,7 @@ These findings suggest that emotional responses in short video comment sections 
 │   └── processed/
 ├── scripts/
 │   ├── crawler/
+│   ├── preprocessing/
 │   ├── frame_extraction/
 │   ├── frame_classification/
 │   ├── anger_detection/
@@ -67,8 +68,11 @@ These findings suggest that emotional responses in short video comment sections 
 │   ├── tables/
 │   └── figures/
 └── docs/
+    └── manuscript/
+        ├── visual_textual_frames_anger_manuscript.pdf
+        └── latex/
 ```
 
 ## Notes
 
-Raw videos, comments, extracted frames, local paths, and row-level video records are not included. The public-facing materials are the analysis scripts, aggregate tables, figures, reports, and manuscript files.
+Raw videos, comments, extracted frames, local paths, and row-level video records are not included. The public-facing materials are the preprocessing and analysis scripts, aggregate tables, figures, reports, manuscript PDF, and LaTeX source generated from the full paper text.

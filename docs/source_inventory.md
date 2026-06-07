@@ -6,11 +6,11 @@ This folder was assembled from local project files to match the repository struc
 
 - `data/processed/README.md`: note explaining why row-level processed CSV files are not included.
 - `data/raw/README.md`: note explaining that raw materials remain local-only.
-- `scripts/`: crawler, frame extraction, visual/textual frame classification, anger detection, and analysis scripts.
+- `scripts/`: crawler, transcription/preprocessing, frame extraction, visual/textual frame classification, anger detection, and analysis scripts.
 - `results/tables/`: aggregate descriptive, crosstab, ANOVA/regression, robustness, and model-result tables.
 - `results/figures/`: frame distribution, crosstab heatmap, anger-rate, regression, and BERT classifier figures.
 - `docs/`: analysis reports and manuscript draft materials.
-- `docs/manuscript/`: paper PDF for the visual/textual frames and anger study.
+- `docs/manuscript/`: paper PDF and LaTeX source for the visual/textual frames and anger study.
 
 ## Local Only
 
