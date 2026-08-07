@@ -1,7 +1,3 @@
-![Table 3. Two-way ANOVA results for video-level anger rate](results/figures/table3_two_way_anova.svg)
-
-Sorry, I forgot to put this table on the poster.
-
 # Visual–Textual Frames and Anger in Short-Video Comments
 
 This repository contains the public replication materials for:
@@ -11,6 +7,16 @@ This repository contains the public replication materials for:
 > Accepted by the AEJMC 2026 Visual Communication Division.
 
 The accepted paper is available here, clicking it if you like! [PDF](AEJMC_VISC_FP-19-9246.pdf)
+
+## Selected Tables
+
+![Table 1. Visual coding examples](results/figures/table1_visual_coding_examples.svg)
+
+![Table 2. Training parameters and classification performance of the BERT sentiment classification model](results/figures/table2_bert_training_performance.svg)
+
+![Table 3. Two-way ANOVA results for video-level anger rate](results/figures/table3_two_way_anova.svg)
+
+Sorry, I forgot to put these tables on the poster.
 
 ## Study Overview
 

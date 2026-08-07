@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1400" viewBox="0 0 1500 1400" role="img" aria-labelledby="title desc">
+  <title id="title">Table 1. Visual coding examples</title>
+  <desc id="desc">A clean vector recreation of the visual coding examples table with three frame types, coding indicators, and example thumbnails.</desc>
+  <rect width="100%" height="100%" fill="#ffffff"/>
+  <style>
+    .title { font: 700 30px Georgia, 'Times New Roman', serif; fill: #111; }
+    .head { font: 700 26px Georgia, 'Times New Roman', serif; fill: #111; }
+    .body { font: 24px Georgia, 'Times New Roman', serif; fill: #111; }
+    .small { font: 22px Georgia, 'Times New Roman', serif; fill: #111; }
+    .rule { stroke: #333; stroke-width: 2; }
+    .light { stroke: #666; stroke-width: 1.3; }
+  </style>
+
+  <text x="40" y="50" class="title">Table 1. Visual coding examples</text>
+  <line x1="40" y1="62" x2="1460" y2="62" class="rule"/>
+
+  <rect x="40" y="80" width="1420" height="1280" fill="none" class="rule"/>
+  <line x1="320" y1="80" x2="320" y2="1360" class="rule"/>
+  <line x1="930" y1="80" x2="930" y2="1360" class="rule"/>
+  <line x1="40" y1="132" x2="1460" y2="132" class="rule"/>
+  <line x1="40" y1="512" x2="1460" y2="512" class="light"/>
+  <line x1="40" y1="896" x2="1460" y2="896" class="light"/>
+
+  <text x="180" y="118" text-anchor="middle" class="head">Visual frames</text>
+  <text x="625" y="118" text-anchor="middle" class="head">Coding indicators</text>
+  <text x="1195" y="118" text-anchor="middle" class="head">Examples</text>
+
+  <!-- Row 1 -->
+  <text x="180" y="316" text-anchor="middle" class="body">Intensifying frame</text>
+  <text x="375" y="270" class="small">Images emphasizing threat, punishment,</text>
+  <text x="375" y="305" class="small">suffering, or moral urgency, such as police</text>
+  <text x="375" y="340" class="small">lights, handcuffs, obscured faces, dark or tense</text>
+  <text x="375" y="375" class="small">scenes, drug-related objects, and other</text>
+  <text x="375" y="410" class="small">warning-oriented visual elements.</text>
+  <defs>
+    <linearGradient id="intenseBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#2b2b2b"/>
+      <stop offset="100%" stop-color="#5d1f1f"/>
+    </linearGradient>
+    <linearGradient id="infoBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#86c9ff"/>
+      <stop offset="100%" stop-color="#1d78d6"/>
+    </linearGradient>
+    <linearGradient id="mitigateBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#bed6f2"/>
+      <stop offset="100%" stop-color="#6d8fbe"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="1120" y="160" width="220" height="330" fill="url(#intenseBg)" stroke="#999" stroke-width="1.5"/>
+  <rect x="1134" y="186" width="192" height="30" fill="#d7b100"/>
+  <rect x="1134" y="222" width="170" height="22" fill="#e74c3c"/>
+  <rect x="1134" y="250" width="184" height="22" fill="#f1c40f"/>
+  <circle cx="1230" cy="362" r="36" fill="#111"/>
+  <rect x="1198" y="390" width="64" height="48" rx="8" fill="#111"/>
+  <text x="1230" y="335" text-anchor="middle" class="small" fill="#fff">intensifying</text>
+
+  <!-- Row 2 -->
+  <text x="180" y="710" text-anchor="middle" class="body">Informational frame</text>
+  <text x="375" y="664" class="small">Images mainly providing factual background or</text>
+  <text x="375" y="699" class="small">issue explanation, such as ordinary talking-head</text>
+  <text x="375" y="734" class="small">shots, news broadcasts, routine interviews, and</text>
+  <text x="375" y="769" class="small">general descriptive footage without obvious</text>
+  <text x="375" y="804" class="small">emotional intensification or de-escalation.</text>
+  <rect x="1120" y="544" width="220" height="330" fill="url(#infoBg)" stroke="#999" stroke-width="1.5"/>
+  <rect x="1130" y="560" width="200" height="28" fill="#0e3868"/>
+  <text x="1230" y="580" text-anchor="middle" class="small" fill="#fff">news / report / talk</text>
+  <rect x="1188" y="604" width="84" height="148" rx="8" fill="#f5f7fa" opacity="0.94"/>
+  <circle cx="1230" cy="658" r="28" fill="#f6c9a2"/>
+  <rect x="1202" y="684" width="56" height="46" rx="6" fill="#ffffff"/>
+  <text x="1230" y="719" text-anchor="middle" class="small" fill="#fff">informational</text>
+
+  <!-- Row 3 -->
+  <text x="180" y="1094" text-anchor="middle" class="body">Mitigating frame</text>
+  <text x="375" y="1048" class="small">Images emphasizing rules, order, and</text>
+  <text x="375" y="1083" class="small">institutional control, such as legal documents,</text>
+  <text x="375" y="1118" class="small">official response pages, institutional signs,</text>
+  <text x="375" y="1153" class="small">procedural charts, and professional</text>
+  <text x="375" y="1188" class="small">informational settings that suggest the issue</text>
+  <text x="375" y="1223" class="small">remains governable and bounded.</text>
+  <rect x="1120" y="928" width="220" height="330" fill="url(#mitigateBg)" stroke="#999" stroke-width="1.5"/>
+  <rect x="1132" y="946" width="196" height="38" fill="#d7e7f7"/>
+  <rect x="1132" y="990" width="150" height="22" fill="#2f5d7c"/>
+  <rect x="1144" y="1044" width="96" height="116" fill="#d8b46b" stroke="#8f6a26" stroke-width="1"/>
+  <rect x="1196" y="1088" width="98" height="72" fill="#2f5d7c" opacity="0.85"/>
+  <text x="1230" y="1103" text-anchor="middle" class="small" fill="#fff">mitigating</text>
+</svg>
