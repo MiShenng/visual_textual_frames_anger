@@ -6,11 +6,7 @@ This repository contains the public replication materials for:
 >
 > Accepted by the AEJMC 2026 Visual Communication Division.
 
-The accepted paper is available here: [AEJMC_VISC_FP-19-9246.pdf](AEJMC_VISC_FP-19-9246.pdf).
-
-## AI Usage Statement
-
-This repository was organized using Codex, and most of the code was written using Codex.
+The accepted paper is available here, clicking it if you like!
 
 ## Study Overview
 
@@ -61,9 +57,7 @@ Rscript scripts/analysis/run_analysis.R
 Rscript scripts/analysis/plot_analysis.R
 ```
 
-`run_analysis.R` validates the analytic data and writes the final statistical tables to `results/tables/`. `plot_analysis.R` creates independent 300-dpi reproductions under `results/figures/reproduced/` without overwriting the original manuscript figures in `results/figures/`.
-
-The replication was checked with R 4.4.1 and `ggplot2` 4.0.1. The statistical analysis uses base R; figure reproduction additionally requires `ggplot2`, which can be installed with `install.packages("ggplot2")`.
+`run_analysis.R` validates the analytic data and writes the final statistical tables to `results/tables/`.The replication was checked with R 4.4.1 and `ggplot2` 4.0.1. The statistical analysis uses base R.
 
 ## Repository Structure
 
@@ -90,3 +84,6 @@ The replication was checked with R 4.4.1 and `ggplot2` 4.0.1. The statistical an
 The public analytic table retains video-level metadata needed to identify and audit the sampled content: the original Douyin video ID, a canonical direct video URL, the author's public display name, the video title , publication time, like count, and follower count.
 
 They are provided for scholarly verification and should be used in accordance with applicable research-ethics requirements and platform terms. The repository does not release raw videos, audio, extracted frames, transcripts, comment text, commenter identifiers, credentials, model checkpoints, local paths, or crawler runtime files.
+
+## AI Use disclose
+This repository was organized using codex, and most of the code was written using codex.
