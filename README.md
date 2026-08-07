@@ -87,6 +87,6 @@ The replication was checked with R 4.4.1 and `ggplot2` 4.0.1. The statistical an
 
 ## Data Access and Ethics
 
-The public analytic table intentionally retains video-level metadata needed to identify and audit the sampled content: the original Douyin video ID, a canonical direct video URL, the author's public display name, the video title when available, publication time, like count, and follower count. All 449 records include a video ID and direct URL; one source record did not provide a title. Platform content and links may later be edited, restricted, or removed by their owners or by Douyin.
+The public analytic table retains video-level metadata needed to identify and audit the sampled content: the original Douyin video ID, a canonical direct video URL, the author's public display name, the video title , publication time, like count, and follower count.
 
-These fields describe publicly accessible videos and creator accounts as observed during data collection. They are provided for scholarly verification and should be used in accordance with applicable research-ethics requirements and platform terms. The repository does not release raw videos, audio, extracted frames, transcripts, comment text, commenter identifiers, credentials, model checkpoints, local paths, or crawler runtime files.
+They are provided for scholarly verification and should be used in accordance with applicable research-ethics requirements and platform terms. The repository does not release raw videos, audio, extracted frames, transcripts, comment text, commenter identifiers, credentials, model checkpoints, local paths, or crawler runtime files.
