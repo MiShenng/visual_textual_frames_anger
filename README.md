@@ -1,3 +1,7 @@
+![Table 3. Two-way ANOVA results for video-level anger rate](results/figures/table3_two_way_anova.svg)
+
+Sorry, I forgot to put this table on the poster.
+
 # Visual–Textual Frames and Anger in Short-Video Comments
 
 This repository contains the public replication materials for:

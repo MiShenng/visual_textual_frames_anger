@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-labelledby="title desc">
+  <title id="title">Table 3. Two-way ANOVA results for video-level anger rate</title>
+  <desc id="desc">A clean vector recreation of the two-way ANOVA results table for visual frame and text frame effects on video-level anger rate.</desc>
+  <rect width="100%" height="100%" fill="#ffffff"/>
+  <style>
+    .title { font: 700 28px Georgia, 'Times New Roman', serif; fill: #111; }
+    .body { font: 22px Georgia, 'Times New Roman', serif; fill: #111; }
+    .small { font: 18px Georgia, 'Times New Roman', serif; fill: #111; }
+    .italic { font-style: italic; }
+    .rule { stroke: #222; stroke-width: 2; }
+    .light { stroke: #666; stroke-width: 1.2; }
+  </style>
+
+  <text x="42" y="52" class="title">Table 3. Two-way ANOVA results for video-level anger rate</text>
+  <line x1="86" y1="70" x2="1110" y2="70" class="rule"/>
+
+  <text x="170" y="118" class="body">Effect</text>
+  <text x="324" y="118" class="body italic">SS</text>
+  <text x="445" y="118" class="body italic">df</text>
+  <text x="564" y="118" class="body italic">MS</text>
+  <text x="690" y="118" class="body italic">F</text>
+  <text x="812" y="118" class="body italic">p</text>
+  <text x="938" y="118" class="body">Partial η²</text>
+  <line x1="86" y1="136" x2="1110" y2="136" class="light"/>
+
+  <text x="96" y="187" class="body">Visual Frame</text>
+  <text x="313" y="187" class="body">0.252</text>
+  <text x="446" y="187" class="body">2</text>
+  <text x="566" y="187" class="body">0.126</text>
+  <text x="688" y="187" class="body">17.74</text>
+  <text x="806" y="187" class="body">&lt; .001</text>
+  <text x="940" y="187" class="body">.075</text>
+
+  <text x="96" y="247" class="body">Text Frame</text>
+  <text x="313" y="247" class="body">0.078</text>
+  <text x="446" y="247" class="body">2</text>
+  <text x="566" y="247" class="body">0.039</text>
+  <text x="692" y="247" class="body">5.51</text>
+  <text x="806" y="247" class="body">.004</text>
+  <text x="940" y="247" class="body">.024</text>
+
+  <text x="96" y="307" class="body">Visual × Text</text>
+  <text x="313" y="307" class="body">0.008</text>
+  <text x="446" y="307" class="body">4</text>
+  <text x="566" y="307" class="body">0.002</text>
+  <text x="692" y="307" class="body">0.28</text>
+  <text x="806" y="307" class="body">.893</text>
+  <text x="940" y="307" class="body">.003</text>
+
+  <text x="96" y="367" class="body">Residual</text>
+  <text x="313" y="367" class="body">3.124</text>
+  <text x="438" y="367" class="body">440</text>
+  <text x="566" y="367" class="body">0.007</text>
+
+  <text x="96" y="427" class="body">Total</text>
+  <text x="313" y="427" class="body">3.462</text>
+  <text x="438" y="427" class="body">448</text>
+
+  <line x1="86" y1="449" x2="1110" y2="449" class="light"/>
+
+  <text x="42" y="495" class="small">Note. N = 449. The table reports results from the full two-way ANOVA model including the</text>
+  <text x="42" y="520" class="small">main effects of visual frame and text frame, as well as their interaction. Partial η² indicates effect</text>
+  <text x="42" y="545" class="small">size.</text>
+</svg>
