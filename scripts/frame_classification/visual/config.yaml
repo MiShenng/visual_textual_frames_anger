@@ -13,11 +13,11 @@ api:
   max_completion_tokens: 2000
 
 input:
-  slice_results_dir: "data/raw/frame_slices_source/切片结果/all_ph12_20260327_113618"
-  video_text_codes_path: "data/processed/video_level_final_449.csv"
+  slice_results_dir: "../../../data/raw/frame_slices_source/切片结果/all_ph12_20260327_113618"
+  video_text_codes_path: "../../../data/processed/video_level_master_449.csv"
 
 output:
-  output_dir: "outputs/frame_classification/visual"
+  output_dir: "../../../outputs/frame_classification/visual"
 
 coding:
   visual_system_prompt_path: "./prompts/visual_system_prompt.txt"
@@ -26,9 +26,9 @@ coding:
     - "反对"
     - "中立"
   arousal_labels:
-    - "煽动"
-    - "说明"
-    - "缓释"
+    - "Intensifying"
+    - "Informational"
+    - "Mitigating"
   confidence_labels:
     - "low"
     - "medium"

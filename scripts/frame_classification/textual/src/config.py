@@ -250,7 +250,7 @@ def load_config(config_path: Path, require_api_key: bool = True) -> AppConfig:
             confidence_aliases=_normalize_alias_map(coding_data.get("confidence_aliases")),
         ),
         pipeline=PipelineConfig(
-            overwrite_existing=bool(pipeline_data.get("overwrite_existing", False)),
+            overwrite_existing=_normalize_optional_bool(pipeline_data.get("overwrite_existing", False)) or False,
         ),
     )
 
@@ -258,6 +258,8 @@ def load_config(config_path: Path, require_api_key: bool = True) -> AppConfig:
         raise ValueError("api.api_url 不能为空。")
     if not config.api.text_model:
         raise ValueError("api.text_model 不能为空。")
+    if config.api.text_concurrency <= 0:
+        raise ValueError("api.text_concurrency 必须大于 0。")
     if not config.input.reference_csv_path.exists():
         raise FileNotFoundError(f"reference 文件不存在: {config.input.reference_csv_path}")
     if config.input.transcript_summary_path and not config.input.transcript_summary_path.exists():
@@ -266,4 +268,3 @@ def load_config(config_path: Path, require_api_key: bool = True) -> AppConfig:
         raise FileNotFoundError(f"OCR 文本表不存在: {config.input.ocr_text_table_path}")
 
     return config
-

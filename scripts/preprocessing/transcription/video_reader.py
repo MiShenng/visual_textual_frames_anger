@@ -27,6 +27,8 @@ class VideoCSVReader:
 
     def read_videos(self, limit: Optional[int] = None, sample_size: Optional[int] = None, seed: int = 20260323) -> list[VideoItem]:
         rows: list[VideoItem] = []
+        missing_video_ids: list[str] = []
+        seen_video_ids: set[str] = set()
         with self.csv_path.open("r", encoding="utf-8-sig", newline="") as handle:
             reader = csv.DictReader(handle)
             for row in reader:
@@ -34,9 +36,13 @@ class VideoCSVReader:
                     continue
                 video_id = (row.get("platform_video_id") or "").strip()
                 if not video_id:
-                    continue
+                    raise ValueError("视频参考表含空 platform_video_id")
+                if video_id in seen_video_ids:
+                    raise ValueError(f"视频参考表含重复 platform_video_id: {video_id}")
+                seen_video_ids.add(video_id)
                 video_path = self.video_dir / f"{video_id}.mp4"
                 if not video_path.exists():
+                    missing_video_ids.append(video_id)
                     continue
                 rows.append(
                     VideoItem(
@@ -50,6 +56,9 @@ class VideoCSVReader:
                         source_row=row,
                     )
                 )
+
+        if missing_video_ids:
+            raise FileNotFoundError(f"缺少 {len(missing_video_ids)} 个本地视频文件")
 
         if sample_size is not None and sample_size < len(rows):
             rng = random.Random(seed)

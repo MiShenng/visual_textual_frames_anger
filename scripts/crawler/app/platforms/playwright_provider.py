@@ -1,5 +1,6 @@
 import re
 import json
+import logging
 import subprocess
 import random
 import time
@@ -42,6 +43,7 @@ ANTI_CRAWL_KEYWORDS = (
     "操作频繁",
     "请求过于频繁",
 )
+logger = logging.getLogger(__name__)
 
 
 @dataclass(slots=True)
@@ -193,10 +195,7 @@ def _fallback_webid() -> str:
 
 
 def _sign_script_candidates() -> list[Path]:
-    return [
-        Path("vendor/douyin.js"),
-        Path("/tmp/mediacrawler_repo_24635/libs/douyin.js"),
-    ]
+    return [Path(__file__).resolve().parents[2] / "vendor/douyin.js"]
 
 
 def _resolve_sign_script() -> Path:
@@ -329,8 +328,8 @@ class PlaywrightProviderClient(ProviderClient):
                     limit=limit,
                     state_path=state_path,
                 )
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.warning("登录态搜索失败，改用浏览器页面搜索: %s", exc)
         del time_range
         with self._session(crawl_context) as session:
             target = f"https://www.douyin.com/search/{quote(query.strip('#'))}?type=general"

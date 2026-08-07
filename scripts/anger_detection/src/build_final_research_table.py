@@ -52,26 +52,48 @@ def main() -> int:
     if "pred_label" not in pred.columns:
         raise ValueError("predictions 缺少 pred_label 列")
 
-    if "anger_prob" not in pred.columns:
-        if "pred_prob" in pred.columns:
-            # fallback: 若未提供 anger_prob，使用近似方式构造
-            pred["anger_prob"] = np.where(pred["pred_label"].astype(int) == 1, pred["pred_prob"], 1 - pred["pred_prob"])
-        else:
-            raise ValueError("predictions 至少需要 anger_prob 或 pred_prob")
+    required_prediction_columns = {"anger_prob", "is_low_confidence"}
+    missing_prediction_columns = required_prediction_columns - set(pred.columns)
+    if missing_prediction_columns:
+        raise ValueError(f"predictions 缺少列: {sorted(missing_prediction_columns)}")
 
-    if "is_low_confidence" not in pred.columns:
-        threshold = 0.60
-        base_prob = pred["pred_prob"] if "pred_prob" in pred.columns else pred["anger_prob"]
-        pred["is_low_confidence"] = base_prob < threshold
+    master_ids = master[args.id_col].astype("string").str.strip()
+    pred_ids = pred["id"].astype("string").str.strip()
+    for name, ids in [("master", master_ids), ("predictions", pred_ids)]:
+        if ids.isna().any() or ids.eq("").any() or ids.duplicated().any():
+            raise ValueError(f"{name} 的 id 必须非空且唯一")
+    master[args.id_col] = master_ids
+    pred["id"] = pred_ids
+    if set(master_ids) != set(pred_ids):
+        raise ValueError("master 与 predictions 的 id 集合不一致")
 
-    merged = master.merge(pred, left_on=args.id_col, right_on="id", how="inner")
-    if merged.empty:
-        raise ValueError("主数据与预测结果合并后为空，请检查 id 对齐")
+    merged = master.merge(
+        pred,
+        left_on=args.id_col,
+        right_on="id",
+        how="inner",
+        validate="one_to_one",
+    )
+    if len(merged) != len(master):
+        raise ValueError("主数据与预测结果未完整一对一合并")
 
     if args.video_col not in merged.columns:
-        merged[args.video_col] = "MISSING"
-    else:
-        merged[args.video_col] = merged[args.video_col].fillna("MISSING").astype(str)
+        raise ValueError(f"master 缺少视频列: {args.video_col}")
+    video_ids = merged[args.video_col].astype("string").str.strip()
+    if video_ids.isna().any() or video_ids.eq("").any():
+        raise ValueError(f"{args.video_col} 必须非空")
+    merged[args.video_col] = video_ids
+
+    pred_labels = pd.to_numeric(merged["pred_label"], errors="coerce")
+    if pred_labels.isna().any() or not pred_labels.isin([0, 1]).all():
+        raise ValueError("pred_label 只能为 0 或 1")
+    merged["pred_label"] = pred_labels.astype(int)
+    anger_prob = pd.to_numeric(merged["anger_prob"], errors="coerce")
+    if not np.isfinite(anger_prob).all() or not anger_prob.between(0, 1).all():
+        raise ValueError("anger_prob 必须是 [0, 1] 内的有限数值")
+    merged["anger_prob"] = anger_prob
+    if not pd.api.types.is_bool_dtype(merged["is_low_confidence"]):
+        raise ValueError("is_low_confidence 必须为布尔值")
 
     if args.time_col not in merged.columns:
         merged[args.time_col] = pd.NA

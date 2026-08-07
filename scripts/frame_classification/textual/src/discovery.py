@@ -32,23 +32,7 @@ def discover_text_records(reference_path: Path, transcript_path: Path | None, oc
     transcript = _load_transcript_df(transcript_path) if transcript_path else pd.DataFrame(columns=["video_id"])
     ocr = _load_ocr_df(ocr_path) if ocr_path else pd.DataFrame(columns=["video_id"])
 
-    transcript_ids = set(transcript.get("video_id", []))
-    ocr_ids = set(ocr.get("video_id", []))
-    ref_ids = set(ref["video_id"])
-
-    # Sample scope:
-    # 1) Prefer transcript universe (研究主样本 480)
-    # 2) Fallback to OCR universe
-    # 3) Fallback to reference universe
-    if transcript_ids:
-        ids = sorted(transcript_ids)
-        scope = "transcript"
-    elif ocr_ids:
-        ids = sorted(ocr_ids)
-        scope = "ocr"
-    else:
-        ids = sorted(ref_ids)
-        scope = "reference"
+    ids = sorted(ref["video_id"].tolist())
 
     base = pd.DataFrame({"video_id": ids})
     merged = (
@@ -93,11 +77,10 @@ def discover_text_records(reference_path: Path, transcript_path: Path | None, oc
         )
 
     logger.info(
-        "文本材料发现完成：reference=%s, transcript=%s, ocr=%s, scope=%s, merged_video=%s",
+        "文本材料发现完成：reference=%s, transcript=%s, ocr=%s, merged_video=%s",
         len(ref),
         len(transcript),
         len(ocr),
-        scope,
         len(records),
     )
     return records
@@ -105,13 +88,15 @@ def discover_text_records(reference_path: Path, transcript_path: Path | None, oc
 
 def _load_reference_df(path: Path) -> pd.DataFrame:
     df = pd.read_csv(path, encoding="utf-8-sig")
-    if "video_id" not in df.columns:
-        raise ValueError(f"reference 缺少 video_id 列: {path}")
+    video_col = "platform_video_id" if "platform_video_id" in df.columns else "video_id"
+    if video_col not in df.columns:
+        raise ValueError(f"reference 缺少 platform_video_id/video_id 列: {path}")
     keep = [
-        "video_id",
+        video_col,
         "title",
         "author_name",
         "publish_time",
+        "published_at",
         "title_text",
         "transcript_text",
         "subtitle_text",
@@ -120,11 +105,12 @@ def _load_reference_df(path: Path) -> pd.DataFrame:
         "text_package",
     ]
     out = df[[col for col in keep if col in df.columns]].copy()
+    out = out.rename(columns={video_col: "video_id"})
     out["video_id"] = out["video_id"].map(_normalize_video_id)
     for col in out.columns:
         if col != "video_id":
             out[col] = out[col].map(_clean_text)
-    out = out.drop_duplicates(subset=["video_id"], keep="first").reset_index(drop=True)
+    _validate_video_ids(out, "reference", path)
     return out
 
 
@@ -143,7 +129,7 @@ def _load_transcript_df(path: Path) -> pd.DataFrame:
             "json_path_transcript": df.get("json_path", "").map(_clean_text) if "json_path" in df.columns else "",
         }
     )
-    out = out.drop_duplicates(subset=["video_id"], keep="first").reset_index(drop=True)
+    _validate_video_ids(out, "转录表", path)
     return out
 
 
@@ -162,8 +148,16 @@ def _load_ocr_df(path: Path) -> pd.DataFrame:
             "embedded_text_ocr": df.get("embedded_text", "").map(_clean_text) if "embedded_text" in df.columns else "",
         }
     )
-    out = out.drop_duplicates(subset=["video_id"], keep="first").reset_index(drop=True)
+    _validate_video_ids(out, "OCR 表", path)
     return out
+
+
+def _validate_video_ids(df: pd.DataFrame, name: str, path: Path) -> None:
+    ids = df["video_id"].astype("string").str.strip()
+    if ids.isna().any() or ids.eq("").any():
+        raise ValueError(f"{name} 含空 video_id: {path}")
+    if ids.duplicated().any():
+        raise ValueError(f"{name} 含重复 video_id: {path}")
 
 
 def _compose_text_material(

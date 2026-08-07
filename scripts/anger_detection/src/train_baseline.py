@@ -15,6 +15,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.calibration import CalibratedClassifierCV
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
     accuracy_score,
@@ -87,29 +88,21 @@ def build_pipeline(model_type: str, max_features: int, ngram_min: int, ngram_max
     if model_type == "logreg":
         classifier = LogisticRegression(max_iter=3000, class_weight="balanced")
     else:
-        classifier = LinearSVC(class_weight="balanced")
+        classifier = CalibratedClassifierCV(
+            estimator=LinearSVC(class_weight="balanced"),
+            method="sigmoid",
+            cv=5,
+        )
 
     return Pipeline([("tfidf", vectorizer), ("clf", classifier)])
-
-
-def sigmoid(x: np.ndarray) -> np.ndarray:
-    x = np.clip(x, -30, 30)
-    return 1 / (1 + np.exp(-x))
 
 
 def predict_with_probability(pipeline: Pipeline, texts: pd.Series) -> tuple[np.ndarray, np.ndarray]:
     preds = pipeline.predict(texts)
     clf = pipeline.named_steps["clf"]
-
-    if hasattr(clf, "predict_proba"):
-        probs_pos = pipeline.predict_proba(texts)[:, 1]
-    elif hasattr(clf, "decision_function"):
-        scores = pipeline.decision_function(texts)
-        if isinstance(scores, list):
-            scores = np.asarray(scores)
-        probs_pos = sigmoid(np.asarray(scores))
-    else:
-        probs_pos = preds.astype(float)
+    if not hasattr(clf, "predict_proba"):
+        raise TypeError("基线分类器必须提供校准后的 predict_proba")
+    probs_pos = pipeline.predict_proba(texts)[:, 1]
 
     pred_conf = np.where(preds == 1, probs_pos, 1 - probs_pos)
     return preds.astype(int), pred_conf.astype(float)

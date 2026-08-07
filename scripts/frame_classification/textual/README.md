@@ -1,58 +1,24 @@
-# 程序 - 文本编码
+# 文本框架编码
 
-该程序用于对每个视频的“文本材料包”进行双层框架编码：
-- 第一层：`narrative_label`（支持 / 反对 / 中立）
-- 第二层：`arousal_label`（煽动 / 说明 / 缓释）
+该程序把视频标题、语音转写、字幕和 OCR 文本合并为材料包，并编码 `narrative_label`（支持/反对/中立）与 `arousal_label`（`Intensifying` / `Informational` / `Mitigating`）。
 
-## 输入数据
+输入、模型、标签和输出路径统一定义在 `config.yaml`。其中视频主表、转写和 OCR 表属于本地受限材料，公开仓库不提供。
 
-- `content/reference.csv`：主视频表（含标题等基础字段）
-- `pre-analysis/数据- 叙事文本/视频语音转录汇总_480.csv`：语音转录结果
-- `content/程序 - 视觉编码/output/tables/video_level_text_codes_with_ocr.csv`：OCR 抽取文本
-
-## 运行前准备
+## 环境与运行
 
 ```bash
-python -m venv .venv && source .venv/bin/activate
 cd scripts/frame_classification/textual
-python3 -m pip install -r requirements.txt
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+export QWEN_API_KEY="<key>"
+.venv/bin/python main.py --config config.yaml --stage all
 ```
 
-配置 API Key：
+`--stage` 可取：
 
-```bash
-# Set QWEN_API_KEY in your shell environment before running this script.
-```
+- `package`：生成文本材料包。
+- `code`：调用模型编码，保留已成功结果。
+- `export`：仅重建汇总表。
+- `all`：执行上述阶段。
 
-## 运行
-
-仅重建文本材料包：
-
-```bash
-python3 main.py --config config.yaml --stage package
-```
-
-仅跑编码（支持断点续跑）：
-
-```bash
-python3 main.py --config config.yaml --stage code
-```
-
-仅导出表：
-
-```bash
-python3 main.py --config config.yaml --stage export
-```
-
-全流程：
-
-```bash
-python3 main.py --config config.yaml --stage all
-```
-
-## 输出
-
-- 文本材料包 JSON：`output/text_material_packages/json/*.json`
-- 文本材料包 TXT：`output/text_material_packages/txt/*.txt`
-- 文本材料包汇总：`output/tables/video_level_text_material_packages.csv`
-- 文本编码结果：`output/tables/video_level_text_frame_codes.csv`
+输出写入仓库根目录的 `outputs/frame_classification/textual/`，包括材料包、标准化响应、API 原始响应、日志和视频级编码表。

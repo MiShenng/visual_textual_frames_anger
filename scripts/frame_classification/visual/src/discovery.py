@@ -4,8 +4,6 @@ import csv
 import json
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Iterable
-
 
 @dataclass(frozen=True)
 class SliceRecord:
@@ -24,24 +22,20 @@ class SliceRecord:
 
 
 def discover_slice_records(slice_results_dir: Path, logger) -> list[SliceRecord]:
-    segment_jsons = _latest_by_video(
+    segment_jsons = sorted(
         p for p in slice_results_dir.rglob("segments.json") if not p.name.startswith("._")
     )
+    run_roots = {path.parents[2].resolve() for path in segment_jsons if len(path.parents) > 2}
+    if len(run_roots) > 1:
+        raise ValueError("slice_results_dir 必须指向单一切片 run")
+    video_ids = [path.parent.name for path in segment_jsons]
+    if len(video_ids) != len(set(video_ids)):
+        raise ValueError("同一切片 run 中存在重复 video_id")
     records: list[SliceRecord] = []
     for path in segment_jsons:
         records.extend(_load_from_json(path, logger))
     logger.info("发现视频 %s 个，切片 %s 条。", len(segment_jsons), len(records))
     return records
-
-
-def _latest_by_video(paths: Iterable[Path]) -> list[Path]:
-    latest: dict[str, Path] = {}
-    for path in paths:
-        video_id = path.parent.name
-        current = latest.get(video_id)
-        if current is None or path.stat().st_mtime > current.stat().st_mtime:
-            latest[video_id] = path
-    return sorted(latest.values(), key=lambda p: p.parent.name)
 
 
 def _load_from_json(path: Path, logger) -> list[SliceRecord]:
@@ -57,7 +51,7 @@ def _load_from_json(path: Path, logger) -> list[SliceRecord]:
     video = data.get("video") or {}
     segments = data.get("segments") or []
     video_id = str(video.get("platform_video_id") or path.parent.name)
-    run_name = path.parents[1].name if len(path.parents) > 1 else ""
+    run_name = path.parents[2].name if len(path.parents) > 2 else ""
     records: list[SliceRecord] = []
     for seg in segments:
         segment_index = int(seg.get("segment_index", 0))
@@ -80,7 +74,7 @@ def _load_from_json(path: Path, logger) -> list[SliceRecord]:
 
 def _load_from_csv(path: Path) -> list[SliceRecord]:
     video_id = path.parent.name
-    run_name = path.parents[1].name if len(path.parents) > 1 else ""
+    run_name = path.parents[2].name if len(path.parents) > 2 else ""
     records: list[SliceRecord] = []
     with path.open("r", encoding="utf-8-sig", newline="") as file:
         reader = csv.DictReader(file)
@@ -122,4 +116,3 @@ def _resolve_image_path(segments_file: Path, image_rel: str) -> Path | None:
         if path.exists():
             return path
     return (probe_roots[0] / text).resolve()
-

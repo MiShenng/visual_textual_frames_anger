@@ -379,5 +379,5 @@ def _compose_time_range(
     if time_range:
         return time_range
     if start_time or end_time:
-        return f"{start_time or ''}:{end_time or ''}"
+        return f"{start_time or ''}/{end_time or ''}"
     return None

@@ -67,7 +67,9 @@ def main() -> int:
             raise ValueError(f"full_predictions 缺少列: {col}")
 
     if "is_low_confidence" not in full_df.columns:
-        full_df["is_low_confidence"] = full_df["pred_prob"] < 0.60
+        raise ValueError("full_predictions 缺少列: is_low_confidence")
+    if not pd.api.types.is_bool_dtype(full_df["is_low_confidence"]):
+        raise ValueError("is_low_confidence 必须为布尔值")
 
     if "true_label" not in test_df.columns or "pred_label" not in test_df.columns:
         raise ValueError("test_predictions 需包含 true_label 与 pred_label")
@@ -79,12 +81,13 @@ def main() -> int:
     test_errors = test_errors.head(args.max_test_errors)
 
     # 2) 全量低置信样本
-    low_conf = full_df[full_df["is_low_confidence"].astype(bool)].copy()
+    low_conf = full_df[full_df["is_low_confidence"]].copy()
     low_conf = low_conf.sort_values(by="pred_prob", ascending=True).head(args.max_low_confidence)
 
     # 3) 各类别高置信代表样本
     high_conf_parts = []
-    for label, sub in full_df.groupby("pred_label"):
+    high_conf_source = full_df[~full_df["is_low_confidence"]]
+    for label, sub in high_conf_source.groupby("pred_label"):
         top = sub.sort_values(by="pred_prob", ascending=False).head(args.max_high_confidence_per_class)
         high_conf_parts.append(top)
     high_conf = pd.concat(high_conf_parts, ignore_index=True) if high_conf_parts else pd.DataFrame(columns=full_df.columns)

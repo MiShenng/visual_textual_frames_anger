@@ -39,6 +39,7 @@ class VideoSlicePipelineTests(unittest.TestCase):
         ]
         selected_a = choose_videos(candidates, sample_size=4, seed=42, process_all=False)
         selected_b = choose_videos(candidates, sample_size=4, seed=42, process_all=False)
+        self.assertEqual(len(selected_a), 4)
         self.assertEqual([item.platform_video_id for item in selected_a], [item.platform_video_id for item in selected_b])
 
     def test_segment_adjacent_frames_uses_threshold(self) -> None:
@@ -67,7 +68,13 @@ class VideoSlicePipelineTests(unittest.TestCase):
                 FrameInfo(1, 1.0, str(frame_b), frame_b.name, "00", 0, 9.0, 64, 64),
             ]
             representatives_dir = root / "representatives"
-            segments = to_segment_infos([frames], representatives_dir, root, fps=1.0)
+            segments = to_segment_infos(
+                [frames],
+                representatives_dir,
+                root,
+                fps=1.0,
+                video_duration_seconds=1.5,
+            )
             self.assertEqual(segments[0].representative_frame_index, 1)
             self.assertTrue((representatives_dir / "segment_0000_rep.jpg").exists())
 

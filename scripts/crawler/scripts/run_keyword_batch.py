@@ -205,6 +205,7 @@ def main() -> int:
 
     platform = Platform(args.platform)
     mode = QueryType(args.mode)
+    failed_jobs = 0
     try:
         for index, keyword in enumerate(args.keywords, start=1):
             started_at = time.monotonic()
@@ -252,6 +253,12 @@ def main() -> int:
                         job = db.get(CrawlJob, job_id)
                     else:
                         job = None
+                    if (
+                        completed.returncode != 0
+                        or job is None
+                        or job.status in {JobStatus.FAILED, JobStatus.PARTIAL}
+                    ):
+                        failed_jobs += 1
                     logger.log(
                         f"job_end index={index}/{len(args.keywords)}",
                         payload={
@@ -269,6 +276,7 @@ def main() -> int:
             except KeyboardInterrupt:
                 raise
             except Exception as exc:
+                failed_jobs += 1
                 logger.log(
                     f"job_exception index={index}/{len(args.keywords)}",
                     payload={
@@ -277,8 +285,8 @@ def main() -> int:
                         "elapsed_seconds": round(time.monotonic() - started_at, 2),
                     },
                 )
-        logger.log("batch_end", payload={"counts": current_counts()})
-        return 0
+        logger.log("batch_end", payload={"counts": current_counts(), "failed_jobs": failed_jobs})
+        return 1 if failed_jobs else 0
     except KeyboardInterrupt:
         logger.log("batch_interrupted", payload={"counts": current_counts()})
         return 130

@@ -46,7 +46,11 @@ if [ ! -f "${APP_DIR}/.env" ]; then
 fi
 
 echo "[8/8] install systemd service"
-sudo cp "${APP_DIR}/crawler_deploy/${SERVICE_NAME}.service" "/etc/systemd/system/${SERVICE_NAME}.service"
+sed \
+  -e "s|__APP_USER__|$(id -un)|g" \
+  -e "s|__APP_DIR__|${APP_DIR}|g" \
+  "${APP_DIR}/crawler_deploy/${SERVICE_NAME}.service" \
+  | sudo tee "/etc/systemd/system/${SERVICE_NAME}.service" >/dev/null
 sudo systemctl daemon-reload
 sudo systemctl enable "${SERVICE_NAME}"
 

@@ -1,176 +1,154 @@
 options(stringsAsFactors = FALSE)
 
 if (!requireNamespace("ggplot2", quietly = TRUE)) {
-  stop("Package 'ggplot2' is required for plotting.")
+  stop("Package 'ggplot2' is required for plotting")
 }
 
 library(ggplot2)
 
-in_dir <- "analysis_tables"
-out_dir <- "figures"
-dir.create(out_dir, showWarnings = FALSE)
+table_dir <- "results/tables"
+figure_dir <- "results/figures/reproduced"
+dir.create(figure_dir, recursive = TRUE, showWarnings = FALSE)
 
-path2 <- file.path(in_dir, "table2_frame_distributions.csv")
-path3 <- file.path(in_dir, "table3_visual_text_crosstab.csv")
-path4 <- file.path(in_dir, "table4_anger_by_frame_combo.csv")
-path_reg <- file.path(in_dir, "regression_nb_coefficients.csv")
-
-for (p in c(path2, path3, path4, path_reg)) {
-  if (!file.exists(p)) stop(sprintf("Missing input file: %s", p))
+read_result <- function(filename, required) {
+  path <- file.path(table_dir, filename)
+  if (!file.exists(path)) stop("Missing analysis table: ", path)
+  data <- read.csv(path, fileEncoding = "UTF-8", check.names = FALSE)
+  missing <- setdiff(required, names(data))
+  if (length(missing) > 0) {
+    stop(filename, " is missing columns: ", paste(missing, collapse = ", "))
+  }
+  data
 }
 
-t2 <- read.csv(path2, fileEncoding = "UTF-8")
-t3 <- read.csv(path3, fileEncoding = "UTF-8")
-t4 <- read.csv(path4, fileEncoding = "UTF-8")
-reg <- read.csv(path_reg, fileEncoding = "UTF-8")
+save_figure <- function(plot, filename, width, height) {
+  ggsave(
+    file.path(figure_dir, filename),
+    plot = plot,
+    width = width,
+    height = height,
+    units = "in",
+    dpi = 300,
+    bg = "white"
+  )
+}
 
-frame_order <- c("缓释", "说明", "煽动")
+frame_order <- c("Intensifying", "Informational", "Mitigating")
+base_theme <- theme_minimal(base_size = 13) +
+  theme(
+    panel.grid.minor = element_blank(),
+    plot.title = element_text(face = "bold"),
+    legend.position = "top"
+  )
 
-# Figure 1: Frame distributions
-t2$variable_cn <- ifelse(
-  t2$variable == "text_arousal_label",
-  "文本框架",
-  ifelse(t2$variable == "visual_arousal_label", "视觉框架", t2$variable)
+distributions <- read_result(
+  "frame_distributions.csv",
+  c("modality", "label_en", "n", "percent")
 )
-t2$level <- factor(t2$level, levels = frame_order)
-t2$percent_label <- sprintf("%.1f%%", 100 * t2$percent)
+if (nrow(distributions) != 6 || sum(distributions$n) != 898) {
+  stop("Frame-distribution table does not represent two modalities across 449 videos")
+}
+distributions$label_en <- factor(distributions$label_en, levels = frame_order)
+distributions$annotation <- sprintf("%d\n(%.1f%%)", distributions$n, 100 * distributions$percent)
 
-p1 <- ggplot(t2, aes(x = level, y = percent, fill = variable_cn)) +
-  geom_col(position = position_dodge(width = 0.75), width = 0.65) +
+figure1 <- ggplot(
+  distributions,
+  aes(x = label_en, y = percent, fill = modality)
+) +
+  geom_col(position = position_dodge(width = 0.74), width = 0.66) +
   geom_text(
-    aes(label = percent_label),
-    position = position_dodge(width = 0.75),
+    aes(label = annotation),
+    position = position_dodge(width = 0.74),
     vjust = -0.2,
-    size = 3.8
+    lineheight = 0.9,
+    size = 3.5
   ) +
-  scale_y_continuous(labels = function(x) sprintf("%d%%", round(x * 100)), limits = c(0, 0.7)) +
-  scale_fill_manual(values = c("文本框架" = "#377eb8", "视觉框架" = "#e41a1c")) +
+  scale_fill_manual(values = c("Text" = "#BDBDBD", "Visual" = "#4D4D4D")) +
+  scale_y_continuous(
+    labels = function(x) sprintf("%d%%", round(100 * x)),
+    limits = c(0, 0.68),
+    expand = expansion(mult = c(0, 0.02))
+  ) +
   labs(
-    title = "图1  文本与视觉唤醒框架分布",
-    x = "框架类别",
-    y = "占比",
+    title = "Distribution of Textual and Visual Frames",
+    x = NULL,
+    y = "Share of videos",
     fill = NULL
   ) +
-  theme_minimal(base_size = 13) +
-  theme(
-    legend.position = "top",
-    panel.grid.minor = element_blank(),
-    plot.title = element_text(face = "bold")
+  base_theme
+save_figure(figure1, "figure1_frame_distribution.png", 9, 5.6)
+
+combinations <- read_result(
+  "frame_combinations.csv",
+  c(
+    "visual_label_en", "text_label_en", "n", "row_percent",
+    "standardized_residual"
   )
-
-ggsave(
-  filename = file.path(out_dir, "fig1_frame_distributions.png"),
-  plot = p1,
-  width = 9,
-  height = 5.5,
-  dpi = 300
 )
-
-# Figure 2: Visual x Text heatmap (row percent)
-t3$visual_arousal_label <- factor(t3$visual_arousal_label, levels = frame_order)
-t3$text_arousal_label <- factor(t3$text_arousal_label, levels = frame_order)
-t3$label <- sprintf("n=%d\n%.1f%%", t3$n, 100 * t3$row_percent)
-
-p2 <- ggplot(t3, aes(x = text_arousal_label, y = visual_arousal_label, fill = row_percent)) +
-  geom_tile(color = "white", linewidth = 0.8) +
-  geom_text(aes(label = label), size = 3.6) +
-  scale_fill_gradient(low = "#deebf7", high = "#08519c", labels = function(x) sprintf("%d%%", round(x * 100))) +
-  labs(
-    title = "图2  视觉框架 × 文本框架（行百分比）",
-    x = "文本框架",
-    y = "视觉框架",
-    fill = "行占比"
-  ) +
-  theme_minimal(base_size = 13) +
-  theme(
-    panel.grid = element_blank(),
-    plot.title = element_text(face = "bold")
-  )
-
-ggsave(
-  filename = file.path(out_dir, "fig2_visual_text_heatmap.png"),
-  plot = p2,
-  width = 8.5,
-  height = 6.5,
-  dpi = 300
-)
-
-# Figure 3: Anger rate by frame combination
-t4$frame_combo <- factor(t4$frame_combo, levels = t4$frame_combo[order(t4$anger_rate_mean)])
-t4$n_label <- sprintf("n=%d", t4$n_videos)
-
-p3 <- ggplot(t4, aes(x = frame_combo, y = anger_rate_mean)) +
-  geom_linerange(aes(ymin = anger_rate_p25, ymax = anger_rate_p75), color = "#969696", linewidth = 1.2) +
-  geom_point(color = "#d95f02", size = 3.2) +
-  geom_text(aes(label = n_label), hjust = -0.2, size = 3.4) +
-  coord_flip() +
-  scale_y_continuous(limits = c(0, max(t4$anger_rate_p75, na.rm = TRUE) * 1.15)) +
-  labs(
-    title = "图3  不同框架组合下的愤怒率（点=均值，线=IQR）",
-    x = "视觉 × 文本组合",
-    y = "anger_rate"
-  ) +
-  theme_minimal(base_size = 13) +
-  theme(
-    panel.grid.minor = element_blank(),
-    plot.title = element_text(face = "bold")
-  )
-
-ggsave(
-  filename = file.path(out_dir, "fig3_anger_rate_by_combo.png"),
-  plot = p3,
-  width = 10,
-  height = 6.2,
-  dpi = 300
-)
-
-# Figure 4: Regression IRR forest
-reg <- reg[reg$term != "(Intercept)", ]
-
-clean_term <- function(x) {
-  x <- gsub("text_arousal_label", "文本=", x, fixed = TRUE)
-  x <- gsub("visual_arousal_label", "视觉=", x, fixed = TRUE)
-  x <- gsub(":", " × ", x, fixed = TRUE)
-  x <- gsub("publish_day_index", "发布时间(日序)", x, fixed = TRUE)
-  x <- gsub("visual_segment_count", "视觉片段数", x, fixed = TRUE)
-  x <- gsub("visual_total_duration", "视觉总时长", x, fixed = TRUE)
-  x <- gsub("image_text_count", "画面嵌字数", x, fixed = TRUE)
-  x
+if (nrow(combinations) != 9 || sum(combinations$n) != 449) {
+  stop("Frame-combination table does not represent the final 449-video sample")
 }
+combinations$visual_label_en <- factor(combinations$visual_label_en, levels = frame_order)
+combinations$text_label_en <- factor(combinations$text_label_en, levels = frame_order)
+combinations$annotation <- sprintf("n = %d\n%.1f%%", combinations$n, 100 * combinations$row_percent)
 
-reg$term_cn <- clean_term(reg$term)
-reg$sig <- ifelse(reg$p_value < 0.05, "p < 0.05", "n.s.")
-reg$term_cn <- factor(reg$term_cn, levels = rev(reg$term_cn))
-
-p4 <- ggplot(reg, aes(x = irr, y = term_cn, color = sig)) +
-  geom_vline(xintercept = 1, linetype = "dashed", color = "#636363") +
-  geom_errorbarh(aes(xmin = irr_ci_low, xmax = irr_ci_high), height = 0.2, linewidth = 0.9) +
-  geom_point(size = 2.8) +
-  scale_x_log10() +
-  scale_color_manual(values = c("p < 0.05" = "#e41a1c", "n.s." = "#377eb8")) +
-  labs(
-    title = "图4  负二项回归 IRR（95%CI）",
-    x = "IRR（对数坐标）",
-    y = NULL,
-    color = NULL
+figure2 <- ggplot(
+  combinations,
+  aes(x = text_label_en, y = visual_label_en, fill = standardized_residual)
+) +
+  geom_tile(color = "white", linewidth = 1) +
+  geom_text(aes(label = annotation), lineheight = 0.95, size = 3.7) +
+  scale_fill_gradient2(
+    low = "#D9D9D9",
+    mid = "white",
+    high = "#525252",
+    midpoint = 0,
+    name = "Standardized\nresidual"
   ) +
-  theme_minimal(base_size = 13) +
-  theme(
-    legend.position = "top",
-    panel.grid.minor = element_blank(),
-    plot.title = element_text(face = "bold")
-  )
+  labs(
+    title = "Visual × Textual Frame Combinations",
+    subtitle = "Cells show counts and row percentages",
+    x = "Textual frame",
+    y = "Visual frame"
+  ) +
+  base_theme +
+  theme(panel.grid = element_blank())
+save_figure(figure2, "figure2_frame_combinations.png", 8.5, 6.3)
 
-ggsave(
-  filename = file.path(out_dir, "fig4_regression_irr_forest.png"),
-  plot = p4,
-  width = 11,
-  height = 7.2,
-  dpi = 300
+anger <- read_result(
+  "anger_by_frame_combination.csv",
+  c("visual_label_en", "text_label_en", "n", "mean_anger_rate")
 )
+if (nrow(anger) != 9 || sum(anger$n) != 449) {
+  stop("Anger-rate table does not represent the final 449-video sample")
+}
+anger$visual_label_en <- factor(anger$visual_label_en, levels = rev(frame_order))
+anger$text_label_en <- factor(anger$text_label_en, levels = frame_order)
+anger$annotation <- sprintf("%.3f\n(n = %d)", anger$mean_anger_rate, anger$n)
 
-cat("Plots generated in figures/:\n")
-cat("- fig1_frame_distributions.png\n")
-cat("- fig2_visual_text_heatmap.png\n")
-cat("- fig3_anger_rate_by_combo.png\n")
-cat("- fig4_regression_irr_forest.png\n")
+figure3 <- ggplot(
+  anger,
+  aes(x = text_label_en, y = visual_label_en, fill = mean_anger_rate)
+) +
+  geom_tile(color = "white", linewidth = 1) +
+  geom_text(aes(label = annotation), lineheight = 0.95, size = 3.7) +
+  scale_fill_gradient(
+    low = "white",
+    high = "#404040",
+    limits = range(anger$mean_anger_rate),
+    name = "Mean anger\nrate"
+  ) +
+  labs(
+    title = "Mean Anger Rate by Visual–Textual Frame Combination",
+    subtitle = "Cells show unweighted video-level means and sample sizes",
+    x = "Textual frame",
+    y = "Visual frame"
+  ) +
+  base_theme +
+  theme(panel.grid = element_blank())
+save_figure(figure3, "figure3_anger_rate.png", 8.5, 6.3)
+
+cat("Figures generated from the final 449-video analysis:\n")
+cat("- results/figures/reproduced/figure1_frame_distribution.png\n")
+cat("- results/figures/reproduced/figure2_frame_combinations.png\n")
+cat("- results/figures/reproduced/figure3_anger_rate.png\n")

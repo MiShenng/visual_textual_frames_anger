@@ -4,7 +4,7 @@ import signal
 import threading
 import time
 from contextlib import contextmanager
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Callable, TypeVar
 
 from sqlalchemy import func, select
@@ -104,6 +104,7 @@ class JobService:
             cursor = job.cursor
             remaining = job.limit
             persisted_count = 0
+            seen_search_cursors: set[str] = set()
             video_ids_for_comments: list[str] = []
             request: SearchRequest | None = None
             while True:
@@ -149,6 +150,9 @@ class JobService:
                         break
                 if cursor is None:
                     break
+                if cursor in seen_search_cursors:
+                    raise RuntimeError(f"搜索分页游标重复: {cursor}")
+                seen_search_cursors.add(cursor)
             source = CrawlSource.PRIMARY
             if persisted_count == 0 and request is not None:
                 fallback_videos = self.fallback.search(request)
@@ -210,7 +214,12 @@ class JobService:
             ).all()
             total_comments = 0
             source = CrawlSource.PRIMARY
-            failures: list[tuple[str, str]] = []
+            if len(video_ids) != len(set(video_ids)):
+                raise ValueError("评论任务含重复 video_id")
+            found_ids = {video.platform_video_id for video in videos}
+            failures: list[tuple[str, str]] = [
+                (video_id, "video not found") for video_id in video_ids if video_id not in found_ids
+            ]
             for video in videos:
                 if not force and not self._should_crawl_comments(video):
                     continue
@@ -244,7 +253,7 @@ class JobService:
                     f"{len(failures)} videos failed; first={first_video_id}: {first_error}"
                 )
                 job.status = (
-                    JobStatus.PARTIAL if len(failures) < len(videos) else JobStatus.FAILED
+                    JobStatus.PARTIAL if len(failures) < len(video_ids) else JobStatus.FAILED
                 )
             else:
                 job.status = JobStatus.COMPLETED
@@ -489,7 +498,6 @@ class JobService:
         filtered: list[VideoRecord] = []
         for video in videos:
             if video.published_at is None:
-                filtered.append(video)
                 continue
             if start_at and video.published_at < start_at:
                 continue
@@ -505,12 +513,14 @@ class JobService:
         if not time_range:
             return None, None
         value = time_range.strip()
-        if ":" not in value:
+        if "/" not in value:
             start_at = self._parse_datetime(value)
             return start_at, None
-        raw_start, raw_end = value.split(":", 1)
+        raw_start, raw_end = value.split("/", 1)
         start_at = self._parse_datetime(raw_start) if raw_start.strip() else None
         end_at = self._parse_datetime(raw_end) if raw_end.strip() else None
+        if raw_end.strip() and re.fullmatch(r"\d{4}-\d{2}-\d{2}", raw_end.strip()):
+            end_at = end_at + timedelta(days=1) - timedelta(microseconds=1)
         return start_at, end_at
 
     def _parse_datetime(self, value: str) -> datetime | None:
@@ -698,7 +708,7 @@ class JobService:
                     },
                     level="warning",
                 )
-                break
+                raise RuntimeError(f"评论分页游标重复: {cursor}")
             seen_comment_cursors.add(cursor)
 
         if not saw_primary_comments:
@@ -836,7 +846,7 @@ class JobService:
                     },
                     level="warning",
                 )
-                break
+                raise RuntimeError(f"回复分页游标重复: {reply_cursor}")
             seen_reply_cursors.add(reply_cursor)
 
         if not saw_primary_replies:

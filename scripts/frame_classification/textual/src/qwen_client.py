@@ -196,18 +196,14 @@ class QwenClient:
         return repaired
 
     def _normalize_confidence(self, value: Any) -> str:
-        fallback = "low" if "low" in self.config.coding.confidence_labels else self.config.coding.confidence_labels[0]
         text = str(value or "").strip()
         if not text:
-            return fallback
-        try:
-            return normalize_label(
-                text,
-                self.config.coding.confidence_labels,
-                self.config.coding.confidence_aliases,
-            )
-        except Exception:
-            return fallback
+            raise ValueError("confidence 不能为空")
+        return normalize_label(
+            text,
+            self.config.coding.confidence_labels,
+            self.config.coding.confidence_aliases,
+        )
 
     @staticmethod
     def _normalize_cues(value: Any) -> list[str]:
@@ -221,4 +217,3 @@ class QwenClient:
             if text:
                 cues.append(text)
         return cues[:3]
-

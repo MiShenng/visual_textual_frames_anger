@@ -1,78 +1,92 @@
-## Overview
+# Visual–Textual Frames and Anger in Short-Video Comments
 
-This repository contains the materials for the study:
+This repository contains the public replication materials for:
 
-**Should I Stay Calm: How Does the Combination of Visual and Textual Frames Influence Expressions of Anger in Short Video Comment Sections?**
+> **Don’t be too calm: How does the combination of visual and textual frames influence expressions of anger in short video comment sections?**
+>
+> Accepted by the AEJMC 2026 Visual Communication Division.
 
-Accepted by **AEJMC 2026, Visual Communication Division**.
+The accepted paper is available here: [AEJMC_VISC_FP-19-9246.pdf](AEJMC_VISC_FP-19-9246.pdf).
 
-## Abstract
+## AI Usage Statement
 
-This study examines how visual and textual frames in short videos are associated with expressions of anger in comment sections. Using a dataset of 449 Douyin videos related to China’s drug record sealing controversy and 419,126 user comments, the project combines computational visual frame identification, textual frame classification, and comment-level anger detection.
+This repository was organized using Codex, and most of the code was written using Codex.
 
-The analysis focuses on whether visual and textual frames tend to align within the same video, how different frame combinations correspond to levels of anger in comments, and whether the two modalities interact or contribute independently to emotional expression.
+## Study Overview
 
-## Research Questions
+This study examines how visual and textual frames are combined in short videos and how these combinations are associated with anger expressed in comment sections. The analysis covers 449 Douyin videos about the debate over sealing drug-use records in China and 419,126 analyzed top-level comments.
 
-This study asks:
+Each video is coded using the same three-category framework for both modalities:
 
-1. How are visual and textual frames combined in short videos?
-2. Do different combinations of visual and textual frames correspond to different levels of anger in comment sections?
-3. Do visual and textual frames interact in shaping anger, or do they contribute independently?
+- **Intensifying** frames heighten conflict, threat, blame, or moral condemnation.
+- **Informational** frames emphasize factual description, explanation, or policy context.
+- **Mitigating** frames reduce conflict, provide reassurance, or encourage restraint.
+
+The workflow combines representative-frame extraction and LLM-supported visual coding, aggregation and human coding of textual content, BERT-based anger detection at the comment level, and video-level statistical analysis.
+
+## Main Results
+
+- The anger classifier identified 48,973 angry comments, representing 11.68% of all analyzed comments.
+- Visual and textual frame categories were statistically associated rather than independent, χ²(4) = 50.171, p < .001, Cramér's V = .236.
+- Anger rates differed across the nine visual–textual frame combinations, Kruskal–Wallis H(8) = 50.984, p < .001.
+- Videos combining mitigating visual and textual frames had the lowest observed mean anger rate (6.44%) and the lowest fractional-logit prediction (6.44%, 95% CI [5.34%, 7.75%]).
+- In the two-way ANOVA, visual frames, F(2, 440) = 17.736, p < .001, and textual frames, F(2, 440) = 5.509, p = .004, showed significant statistical main effects. Their interaction was not significant, F(4, 440) = 0.277, p = .893.
+- In the repository's controlled OLS reproduction, the visual and textual frame terms remained jointly significant after controlling for likes, follower count, and publication time, while the interaction remained non-significant.
+
+Together, the results indicate that visual and textual framing are both associated with anger expression. The evidence is consistent with separate main associations rather than a detectable interaction.
+
+## Main Contributions
+
+1. **A multimodal account of short-video framing.** The study analyzes visual and textual frames within the same videos, showing that the two modalities were statistically associated and often aligned in the sampled content.
+2. **Evidence about emotional expression in comment sections.** It links multimodal framing to an observed comment-section outcome—expressed anger—and separates the modalities' main statistical associations from their interaction.
+3. **A scalable approach to dynamic visual content.** The project provides a workflow for reducing continuous video into representative visual units, supporting visual coding with LLM-generated descriptions, coding aggregated textual content under the same framework, classifying comment-level anger, and linking these measures at the video level.
 
 ## Data
 
-The dataset includes:
+The final analytic file is [`data/processed/video_level_master_449.csv`](data/processed/video_level_master_449.csv). It contains one row per video and retains:
 
-- 449 Douyin videos
-- 419,126 user comments
-- Video-level visual frame labels
-- Video-level textual frame labels
-- Comment-level anger classification results
+- the repository case number, original platform video ID, and canonical Douyin URL;
+- author, title, publication time, likes, and follower count;
+- dominant visual and textual frame labels; and
+- analyzed-comment counts, anger counts, and video-level anger measures.
 
-Due to platform policies and research ethics, raw video files and user comments are not publicly released in this repository.
-Identifiable processed files containing platform video IDs, author names, titles, local frame paths, or other platform-level identifiers are excluded. This repository publishes de-identified processed data, aggregate result tables, and figures for methodological transparency.
+See [`data/processed/README.md`](data/processed/README.md) for the complete variable groups and data-construction notes.
 
-## Method
+## Reproduce the Results
 
-The study uses a computational mixed-method workflow:
+Run the following commands from the repository root:
 
-- Representative frames were extracted from short videos.
-- Visual frames were classified into intensifying, informational, and mitigating categories.
-- Textual content was classified using the same frame categories.
-- A fine-tuned BERT classifier was used to identify anger in user comments.
-- Video-level anger rates were analyzed using two-way ANOVA and robustness checks.
+```bash
+Rscript scripts/analysis/run_analysis.R
+Rscript scripts/analysis/plot_analysis.R
+```
 
-## Main Findings
+`run_analysis.R` validates the analytic data and writes the final statistical tables to `results/tables/`. `plot_analysis.R` creates independent 300-dpi reproductions under `results/figures/reproduced/` without overwriting the original manuscript figures in `results/figures/`.
 
-The study finds that visual and textual frames within individual videos tend to align rather than diverge. Different frame combinations are associated with significantly different levels of anger in comment sections. Two-way ANOVA shows that both visual and textual frames contribute independently to anger, while their interaction effect is not statistically significant.
-
-These findings suggest that emotional responses in short video comment sections are jointly organized across visual and textual modalities, rather than being driven by a single channel.
+The replication was checked with R 4.4.1 and `ggplot2` 4.0.1. The statistical analysis uses base R; figure reproduction additionally requires `ggplot2`, which can be installed with `install.packages("ggplot2")`.
 
 ## Repository Structure
 
 ```text
 .
-├── README.md
+├── AEJMC_VISC_FP-19-9246.pdf       # accepted paper
 ├── data/
-│   ├── raw/
-│   └── processed/
+│   ├── raw/                         # raw-data access notes
+│   └── processed/                   # final 449-video analytic table
 ├── scripts/
-│   ├── crawler/
-│   ├── preprocessing/
-│   ├── frame_extraction/
-│   ├── frame_classification/
-│   ├── anger_detection/
-│   └── analysis/
-├── results/
-│   ├── tables/
-│   └── figures/
-└── docs/
-    └── manuscript/
-        ├── visual_textual_frames_anger_manuscript.pdf
-        └── latex/
+│   ├── crawler/                     # public-video and comment collection
+│   ├── preprocessing/               # audio extraction and speech transcription
+│   ├── frame_extraction/            # representative visual-frame extraction
+│   ├── frame_classification/        # visual and textual frame coding
+│   ├── anger_detection/             # comment-level anger classification
+│   └── analysis/                    # final analysis and plotting entry points
+└── results/
+    ├── tables/                      # final statistical results
+    └── figures/                     # manuscript figures; reproductions are generated locally
 ```
 
-## Notes
+## Data Access and Ethics
 
-Raw videos, comments, extracted frames, local paths, and row-level video records are not included. The public-facing materials are the preprocessing and analysis scripts, aggregate tables, figures, reports, manuscript PDF, and LaTeX source generated from the full paper text.
+The public analytic table intentionally retains video-level metadata needed to identify and audit the sampled content: the original Douyin video ID, a canonical direct video URL, the author's public display name, the video title when available, publication time, like count, and follower count. All 449 records include a video ID and direct URL; one source record did not provide a title. Platform content and links may later be edited, restricted, or removed by their owners or by Douyin.
+
+These fields describe publicly accessible videos and creator accounts as observed during data collection. They are provided for scholarly verification and should be used in accordance with applicable research-ethics requirements and platform terms. The repository does not release raw videos, audio, extracted frames, transcripts, comment text, commenter identifiers, credentials, model checkpoints, local paths, or crawler runtime files.

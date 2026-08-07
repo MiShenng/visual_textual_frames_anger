@@ -257,7 +257,7 @@ def load_config(config_path: Path, require_api_key: bool = True) -> AppConfig:
             confidence_aliases=_normalize_alias_map(coding_data.get("confidence_aliases")),
         ),
         pipeline=PipelineConfig(
-            overwrite_existing=bool(pipeline_data.get("overwrite_existing", False)),
+            overwrite_existing=_normalize_optional_bool(pipeline_data.get("overwrite_existing", False)) or False,
         ),
     )
 

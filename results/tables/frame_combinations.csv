@@ -1,0 +1,10 @@
+"visual_label","visual_label_en","text_label","text_label_en","n","row_percent","expected_n","standardized_residual"
+"Intensifying","Intensifying","Intensifying","Intensifying",31,0.455882352941176,11.8129175946548,6.66695082703825
+"Informational","Informational","Intensifying","Intensifying",27,0.142857142857143,32.8329621380846,-1.47165780035046
+"Mitigating","Mitigating","Intensifying","Intensifying",20,0.104166666666667,33.3541202672606,-3.36227601471007
+"Intensifying","Intensifying","Informational","Informational",17,0.25,16.8106904231626,0.0577703917397749
+"Informational","Informational","Informational","Informational",50,0.264550264550265,46.7238307349666,0.725936156330649
+"Mitigating","Mitigating","Informational","Informational",44,0.229166666666667,47.4654788418708,-0.766294569064219
+"Intensifying","Intensifying","Mitigating","Mitigating",20,0.294117647058824,39.3763919821826,-5.16663644210497
+"Informational","Informational","Mitigating","Mitigating",112,0.592592592592593,109.443207126949,0.495028161890085
+"Mitigating","Mitigating","Mitigating","Mitigating",128,0.666666666666667,111.180400890869,3.24975334689126

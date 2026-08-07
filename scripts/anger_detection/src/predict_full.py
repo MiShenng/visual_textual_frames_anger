@@ -110,14 +110,9 @@ def predict_baseline(df: pd.DataFrame, model_path: Path, text_col: str) -> tuple
     pred = pipeline.predict(texts).astype(int)
 
     clf = pipeline.named_steps.get("clf")
-    if hasattr(clf, "predict_proba"):
-        probs_pos = pipeline.predict_proba(texts)[:, 1]
-    elif hasattr(clf, "decision_function"):
-        scores = pipeline.decision_function(texts)
-        scores = np.clip(scores, -30, 30)
-        probs_pos = 1 / (1 + np.exp(-scores))
-    else:
-        probs_pos = pred.astype(float)
+    if not hasattr(clf, "predict_proba"):
+        raise TypeError("基线分类器必须提供校准后的 predict_proba")
+    probs_pos = pipeline.predict_proba(texts)[:, 1]
 
     conf = np.where(pred == 1, probs_pos, 1 - probs_pos)
     anger_prob = probs_pos.astype(float)
@@ -134,7 +129,10 @@ def main() -> int:
         raise ValueError(f"输入数据缺少文本列: {args.text_col}")
 
     if args.id_col not in df.columns:
-        df[args.id_col] = [f"auto_{i+1}" for i in range(len(df))]
+        raise ValueError(f"输入数据缺少 ID 列: {args.id_col}")
+    ids = df[args.id_col].astype("string").str.strip()
+    if ids.isna().any() or ids.eq("").any() or ids.duplicated().any():
+        raise ValueError(f"{args.id_col} 必须非空且唯一")
 
     if args.model_type == "transformer":
         pred, conf, anger_prob = predict_transformer(df, model_path, args.text_col, args.batch_size)

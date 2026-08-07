@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import concurrent.futures
+import hashlib
 import json
 import sys
 import time
@@ -99,7 +100,10 @@ class TextCodingPipeline:
             norm_path = self.config.text_normalized_dir / f"{record.video_id}.json"
             if norm_path.exists() and not self.config.pipeline.overwrite_existing:
                 normalized = load_json(norm_path)
-                if normalized.get("status") in {"success", "skipped"}:
+                if (
+                    normalized.get("status") == "success"
+                    and normalized.get("input_fingerprint") == self._input_fingerprint(record)
+                ):
                     continue
             pending.append(record)
 
@@ -126,9 +130,15 @@ class TextCodingPipeline:
             )
 
         rows = []
+        incomplete: list[str] = []
         for record in records:
             norm_path = self.config.text_normalized_dir / f"{record.video_id}.json"
             normalized = load_json(norm_path) if norm_path.exists() else {}
+            if (
+                normalized.get("status") != "success"
+                or normalized.get("input_fingerprint") != self._input_fingerprint(record)
+            ):
+                incomplete.append(record.video_id)
             rows.append(
                 {
                     "video_id": record.video_id,
@@ -168,6 +178,8 @@ class TextCodingPipeline:
                     "created_at": normalized.get("created_at", ""),
                 }
             )
+        if incomplete:
+            raise RuntimeError(f"文本编码未完整成功或结果已过期: {len(incomplete)} 条")
         df = pd.DataFrame(rows)
         if not df.empty:
             df = df.sort_values("video_id").reset_index(drop=True)
@@ -183,6 +195,7 @@ class TextCodingPipeline:
             "text_length_chars": len(record.text_material),
             "text_material_package_path": str(package_json_path),
             "text_material_txt_path": str(package_txt_path),
+            "input_fingerprint": self._input_fingerprint(record),
             "created_at": self._created_at(),
         }
         if not record.text_material.strip():
@@ -265,6 +278,18 @@ class TextCodingPipeline:
     def _created_at() -> str:
         return datetime.now().astimezone().isoformat(timespec="seconds")
 
+    def _input_fingerprint(self, record: TextRecord) -> str:
+        payload = {
+            "record": record.to_dict(),
+            "model": self.config.api.text_model,
+            "system_prompt": self.config.coding.text_system_prompt,
+            "narrative_labels": self.config.coding.narrative_labels,
+            "arousal_labels": self.config.coding.arousal_labels,
+            "confidence_labels": self.config.coding.confidence_labels,
+        }
+        raw = json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")
+        return hashlib.sha256(raw).hexdigest()
+
     @staticmethod
     def _latest_raw_json_path(raw_dir: Path, item_id: str) -> str:
         matches = sorted(raw_dir.glob(f"{item_id}__attempt_*.json"))
@@ -311,4 +336,3 @@ class TextCodingPipeline:
         minutes = (seconds % 3600) // 60
         secs = seconds % 60
         return f"{hours:02d}:{minutes:02d}:{secs:02d}"
-

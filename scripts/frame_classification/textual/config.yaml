@@ -10,12 +10,12 @@ api:
   max_completion_tokens: 2000
 
 input:
-  reference_csv_path: "data/processed/video_level_final_449.csv"
-  transcript_summary_path: "data/raw/transcripts_source/视频语音转录汇总_480.csv"
-  ocr_text_table_path: "outputs/frame_classification/visual/tables/video_level_text_codes_with_ocr.csv"
+  reference_csv_path: "../../../data/processed/video_level_master_449.csv"
+  transcript_summary_path: "../../../data/raw/transcripts_source/视频语音转录汇总_480.csv"
+  ocr_text_table_path: "../../../outputs/frame_classification/visual/tables/video_level_text_codes_with_ocr.csv"
 
 output:
-  output_dir: "outputs/frame_classification/textual"
+  output_dir: "../../../outputs/frame_classification/textual"
 
 coding:
   text_system_prompt_path: "./prompts/text_system_prompt.txt"
@@ -24,9 +24,9 @@ coding:
     - "反对"
     - "中立"
   arousal_labels:
-    - "煽动"
-    - "说明"
-    - "缓释"
+    - "Intensifying"
+    - "Informational"
+    - "Mitigating"
   confidence_labels:
     - "low"
     - "medium"

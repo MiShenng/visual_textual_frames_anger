@@ -284,20 +284,14 @@ class QwenClient:
         return cues[:3]
 
     def _normalize_confidence(self, value: Any, field_name: str, slice_id: str) -> str:
-        fallback = "low" if "low" in self.config.coding.confidence_labels else self.config.coding.confidence_labels[0]
         text = str(value or "").strip()
         if not text:
-            self.logger.warning("%s 为空，已回填 %s | slice_id=%s", field_name, fallback, slice_id)
-            return fallback
-        try:
-            return normalize_label(
-                text,
-                self.config.coding.confidence_labels,
-                self.config.coding.confidence_aliases,
-            )
-        except Exception:
-            self.logger.warning("%s 非法，已回填 %s | slice_id=%s | value=%s", field_name, fallback, slice_id, text)
-            return fallback
+            raise ValueError(f"{field_name} 不能为空 | slice_id={slice_id}")
+        return normalize_label(
+            text,
+            self.config.coding.confidence_labels,
+            self.config.coding.confidence_aliases,
+        )
 
     @staticmethod
     def _batch_item_id(items: list[dict[str, Any]]) -> str:

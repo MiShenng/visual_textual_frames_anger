@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import concurrent.futures
 import difflib
+import hashlib
 import json
 import re
 import sys
@@ -33,13 +34,16 @@ class VisualCodingPipeline:
         raise ValueError(f"未知 stage: {stage}")
 
     def run_visual(self) -> None:
-        records = discover_slice_records(self.config.input.slice_results_dir, self.logger)
+        records = self._load_records()
         pending: list[Any] = []
         for record in records:
             norm_path = self.config.visual_normalized_dir / f"{record.slice_id}.json"
             if norm_path.exists() and not self.config.pipeline.overwrite_existing:
                 normalized = load_json(norm_path)
-                if normalized.get("status") in {"success", "skipped"}:
+                if (
+                    normalized.get("status") == "success"
+                    and normalized.get("input_fingerprint") == self._input_fingerprint(record)
+                ):
                     continue
             pending.append(record)
 
@@ -61,7 +65,7 @@ class VisualCodingPipeline:
         self.build_slice_output(records)
 
     def export_only(self) -> None:
-        records = discover_slice_records(self.config.input.slice_results_dir, self.logger)
+        records = self._load_records()
         self.build_slice_output(records)
 
     def _run_parallel(
@@ -106,6 +110,7 @@ class VisualCodingPipeline:
                 "file_name": image_path.name if record.image_path else "",
                 "start_time": record.start_second,
                 "end_time": record.end_second,
+                "input_fingerprint": self._input_fingerprint(record),
                 "created_at": self._created_at(),
             }
             if not image_path.exists():
@@ -174,9 +179,15 @@ class VisualCodingPipeline:
 
     def build_slice_output(self, records) -> None:
         rows = []
+        incomplete: list[str] = []
         for record in records:
             norm_path = self.config.visual_normalized_dir / f"{record.slice_id}.json"
             normalized = load_json(norm_path) if norm_path.exists() else {}
+            if (
+                normalized.get("status") != "success"
+                or normalized.get("input_fingerprint") != self._input_fingerprint(record)
+            ):
+                incomplete.append(record.slice_id)
             image_path = Path(record.image_path)
             rows.append(
                 {
@@ -210,6 +221,8 @@ class VisualCodingPipeline:
                     "run_name": record.run_name,
                 }
             )
+        if incomplete:
+            raise RuntimeError(f"视觉编码未完整成功或结果已过期: {len(incomplete)} 条")
         df = pd.DataFrame(rows)
         if not df.empty:
             df = df.sort_values(["video_id", "segment_id"]).reset_index(drop=True)
@@ -249,6 +262,41 @@ class VisualCodingPipeline:
     @staticmethod
     def _created_at() -> str:
         return datetime.now().astimezone().isoformat(timespec="seconds")
+
+    def _load_records(self):
+        records = discover_slice_records(self.config.input.slice_results_dir, self.logger)
+        reference_path = self.config.input.video_text_codes_path
+        if reference_path is None:
+            raise ValueError("必须配置最终样本视频表 input.video_text_codes_path")
+        if reference_path.suffix.lower() == ".parquet":
+            reference = pd.read_parquet(reference_path)
+        else:
+            reference = pd.read_csv(reference_path, encoding="utf-8-sig")
+        video_col = "platform_video_id" if "platform_video_id" in reference.columns else "video_id"
+        if video_col not in reference.columns:
+            raise ValueError("最终样本视频表缺少 platform_video_id/video_id")
+        reference_ids = reference[video_col].astype("string").str.strip()
+        if reference_ids.isna().any() or reference_ids.eq("").any() or reference_ids.duplicated().any():
+            raise ValueError("最终样本视频表的 video_id 必须非空且唯一")
+        record_ids = {record.video_id for record in records}
+        if record_ids != set(reference_ids):
+            raise ValueError("切片视频集合与最终样本视频集合不一致")
+        return records
+
+    def _input_fingerprint(self, record) -> str:
+        image_path = Path(record.image_path)
+        image_hash = hashlib.sha256(image_path.read_bytes()).hexdigest() if image_path.is_file() else "missing"
+        payload = {
+            "record": record.to_dict(),
+            "image_sha256": image_hash,
+            "model": self.config.api.visual_model,
+            "system_prompt": self.config.coding.visual_system_prompt,
+            "visual_labels": self.config.coding.visual_labels,
+            "arousal_labels": self.config.coding.arousal_labels,
+            "confidence_labels": self.config.coding.confidence_labels,
+        }
+        raw = json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")
+        return hashlib.sha256(raw).hexdigest()
 
     @staticmethod
     def _chunked(records, batch_size: int):
@@ -332,9 +380,16 @@ class VisualCodingPipeline:
         if success_df.empty:
             return pd.DataFrame(columns=columns)
 
-        success_df["start_time"] = pd.to_numeric(success_df["start_time"], errors="coerce").fillna(0.0)
-        success_df["end_time"] = pd.to_numeric(success_df["end_time"], errors="coerce").fillna(0.0)
-        success_df["duration_seconds"] = pd.to_numeric(success_df["duration_seconds"], errors="coerce").fillna(0.0)
+        for field in ("start_time", "end_time", "duration_seconds"):
+            success_df[field] = pd.to_numeric(success_df[field], errors="coerce")
+            if success_df[field].isna().any():
+                raise ValueError(f"切片时间字段含无效值: {field}")
+        if (success_df["start_time"] < 0).any():
+            raise ValueError("start_time 不能为负")
+        if (success_df["end_time"] < success_df["start_time"]).any():
+            raise ValueError("end_time 不能早于 start_time")
+        if (success_df["duration_seconds"] <= 0).any():
+            raise ValueError("duration_seconds 必须大于 0")
         success_df = success_df.sort_values(["video_id", "start_time", "segment_id"]).reset_index(drop=True)
 
         rows: list[dict[str, Any]] = []
@@ -434,7 +489,7 @@ class VisualCodingPipeline:
             group = group.sort_values("block_index").reset_index(drop=True)
             total_duration = float(group["duration_seconds"].sum())
             if total_duration <= 0:
-                total_duration = 1e-9
+                raise ValueError(f"视频总切片时长无效: {video_id}")
 
             visual_share = (
                 group.groupby("visual_label")["duration_seconds"].sum().sort_values(ascending=False) / total_duration
@@ -588,8 +643,10 @@ class VisualCodingPipeline:
             text_df = pd.read_parquet(text_path)
         else:
             text_df = pd.read_csv(text_path, encoding="utf-8-sig")
-        if "video_id" not in text_df.columns:
-            raise ValueError(f"视频文本表缺少 video_id 列: {text_path}")
+        video_col = "platform_video_id" if "platform_video_id" in text_df.columns else "video_id"
+        if video_col not in text_df.columns:
+            raise ValueError(f"视频文本表缺少 platform_video_id/video_id 列: {text_path}")
+        text_df = text_df.rename(columns={video_col: "video_id"})
         text_df["video_id"] = text_df["video_id"].astype(str)
         text_df = text_df.drop_duplicates(subset=["video_id"], keep="first")
         return base_ids.merge(text_df, on="video_id", how="left")

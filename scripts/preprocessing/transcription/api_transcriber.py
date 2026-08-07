@@ -31,7 +31,6 @@ class APITranscriber:
         api_key: Optional[str] = None,
         base_websocket_api_url: Optional[str] = None,
         model: Optional[str] = None,
-        language: str = "zh",
     ):
         self.api_key = api_key or os.environ.get("DASHSCOPE_API_KEY")
         self.base_websocket_api_url = (
@@ -40,7 +39,6 @@ class APITranscriber:
             or "wss://dashscope.aliyuncs.com/api-ws/v1/inference"
         ).rstrip("/")
         self.model = model or os.environ.get("DASHSCOPE_TRANSCRIBE_MODEL") or "fun-asr-realtime"
-        self.language = language
         if not self.api_key:
             raise ValueError("缺少 DASHSCOPE_API_KEY。请通过环境变量提供。")
 

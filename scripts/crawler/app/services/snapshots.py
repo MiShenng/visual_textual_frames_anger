@@ -30,7 +30,7 @@ class SnapshotService:
         if self.settings.snapshot_dedup_enabled and self._is_duplicate_signature(signature):
             self.last_export_at = now
             return None
-        stamp = now.strftime("%Y%m%d_%H%M%S")
+        stamp = now.strftime("%Y%m%d_%H%M%S_%f")
         latest_dir = self.settings.snapshot_dir / "latest"
         archive_dir = self.settings.snapshot_dir / stamp
         latest_dir.mkdir(parents=True, exist_ok=True)

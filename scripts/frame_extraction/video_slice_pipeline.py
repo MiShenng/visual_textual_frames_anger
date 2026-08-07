@@ -98,6 +98,8 @@ def parse_args() -> argparse.Namespace:
 
 def load_candidate_videos(csv_path: Path, video_dir: Path) -> list[VideoRow]:
     candidates: list[VideoRow] = []
+    missing_video_ids: list[str] = []
+    seen_video_ids: set[str] = set()
     with csv_path.open("r", encoding="utf-8-sig", newline="") as handle:
         reader = csv.DictReader(handle)
         for row_index, row in enumerate(reader, start=2):
@@ -105,9 +107,13 @@ def load_candidate_videos(csv_path: Path, video_dir: Path) -> list[VideoRow]:
                 continue
             video_id = (row.get("platform_video_id") or "").strip()
             if not video_id:
-                continue
+                raise ValueError(f"输入表第 {row_index} 行缺少 platform_video_id")
+            if video_id in seen_video_ids:
+                raise ValueError(f"输入表含重复 platform_video_id: {video_id}")
+            seen_video_ids.add(video_id)
             video_path = video_dir / f"{video_id}.mp4"
             if not video_path.exists():
+                missing_video_ids.append(video_id)
                 continue
             candidates.append(
                 VideoRow(
@@ -124,6 +130,8 @@ def load_candidate_videos(csv_path: Path, video_dir: Path) -> list[VideoRow]:
                     source_row=row,
                 )
             )
+    if missing_video_ids:
+        raise FileNotFoundError(f"缺少 {len(missing_video_ids)} 个本地视频文件")
     return candidates
 
 
@@ -137,7 +145,7 @@ def choose_videos(candidates: list[VideoRow], sample_size: int, seed: int, proce
     rng = random.Random(seed)
     ordered = list(candidates)
     rng.shuffle(ordered)
-    return ordered
+    return ordered[:sample_size]
 
 
 def make_run_dir(output_root: Path, run_name: str, process_all: bool, sample_size: int, seed: int) -> Path:
@@ -301,6 +309,7 @@ def to_segment_infos(
     representatives_dir: Path,
     run_dir: Path,
     fps: float,
+    video_duration_seconds: float,
 ) -> list[SegmentInfo]:
     representatives_dir.mkdir(parents=True, exist_ok=True)
     segment_infos: list[SegmentInfo] = []
@@ -310,7 +319,10 @@ def to_segment_infos(
         shutil.copy2(representative.path, representative_target)
         relative_target = representative_target.relative_to(run_dir).as_posix()
         start_second = segment_frames[0].timestamp_seconds
-        end_second = segment_frames[-1].timestamp_seconds + (1.0 / fps)
+        end_second = min(
+            segment_frames[-1].timestamp_seconds + (1.0 / fps),
+            video_duration_seconds,
+        )
         segment_infos.append(
             SegmentInfo(
                 segment_index=segment_index,
@@ -360,7 +372,13 @@ def process_video(
     frame_paths = extract_frames(video_path, raw_frames_dir, fps)
     frame_infos = build_frame_infos(frame_paths, fps=fps, run_dir=run_dir)
     segments = segment_adjacent_frames(frame_infos, fps=fps, phash_threshold=phash_threshold)
-    segment_infos = to_segment_infos(segments, representatives_dir=representatives_dir, run_dir=run_dir, fps=fps)
+    segment_infos = to_segment_infos(
+        segments,
+        representatives_dir=representatives_dir,
+        run_dir=run_dir,
+        fps=fps,
+        video_duration_seconds=duration_seconds,
+    )
 
     frame_rows = [
         {
@@ -570,6 +588,14 @@ def run_parallel(
 
 def main() -> None:
     args = parse_args()
+    if args.sample_size <= 0:
+        raise ValueError("sample-size 必须大于 0")
+    if args.fps <= 0:
+        raise ValueError("fps 必须大于 0")
+    if args.phash_threshold < 0:
+        raise ValueError("phash-threshold 不能为负")
+    if args.workers <= 0:
+        raise ValueError("workers 必须大于 0")
     candidates = load_candidate_videos(args.input_csv, args.video_dir)
     if not candidates:
         raise SystemExit("没有可处理的视频。请先确认输入表和视频目录。")
@@ -617,8 +643,10 @@ def main() -> None:
         "total_segments": sum(int(row["segment_count"]) for row in video_summaries),
     }
     write_json(run_dir / "run_summary.json", run_summary)
-    update_latest_run(args.output_root, run_dir, run_summary)
     print(json.dumps(run_summary, ensure_ascii=False, indent=2))
+    if failed_rows:
+        raise RuntimeError(f"{len(failed_rows)} 条视频切片失败")
+    update_latest_run(args.output_root, run_dir, run_summary)
 
 
 if __name__ == "__main__":

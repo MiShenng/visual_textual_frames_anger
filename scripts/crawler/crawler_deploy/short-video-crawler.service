@@ -4,12 +4,12 @@ After=network.target
 
 [Service]
 Type=simple
-User=ubuntu
-WorkingDirectory=/home/ubuntu/crawler_app
-EnvironmentFile=/home/ubuntu/crawler_app/.env
-ExecStart=/home/ubuntu/crawler_app/.venv/bin/python -m app.cli.main serve --host 0.0.0.0 --port 8080
-StandardOutput=append:/home/ubuntu/crawler_app/crawler.log
-StandardError=append:/home/ubuntu/crawler_app/crawler.log
+User=__APP_USER__
+WorkingDirectory=__APP_DIR__
+EnvironmentFile=__APP_DIR__/.env
+ExecStart=__APP_DIR__/.venv/bin/python -m app.cli.main serve --host 0.0.0.0 --port 8080
+StandardOutput=append:__APP_DIR__/crawler.log
+StandardError=append:__APP_DIR__/crawler.log
 Restart=always
 RestartSec=5
 

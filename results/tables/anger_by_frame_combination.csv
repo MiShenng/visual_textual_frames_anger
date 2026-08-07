@@ -1,0 +1,10 @@
+"visual_label","visual_label_en","text_label","text_label_en","n","mean_anger_rate","median_anger_rate","sd_anger_rate"
+"Intensifying","Intensifying","Intensifying","Intensifying",31,0.14166311014307,0.13,0.103273702945258
+"Informational","Informational","Intensifying","Intensifying",27,0.144910923411308,0.157932519741565,0.0887251233766805
+"Mitigating","Mitigating","Intensifying","Intensifying",20,0.100060026780717,0.0822547683923706,0.112111537737096
+"Intensifying","Intensifying","Informational","Informational",17,0.128411638016166,0.115606936416185,0.0865738874884606
+"Informational","Informational","Informational","Informational",50,0.126612742306851,0.125302767376016,0.0834442767208338
+"Mitigating","Mitigating","Informational","Informational",44,0.0986640471272748,0.0965721040189125,0.0666731821606731
+"Intensifying","Intensifying","Mitigating","Mitigating",20,0.110785320267773,0.129680955900468,0.0695808825783291
+"Informational","Informational","Mitigating","Mitigating",112,0.113584931484451,0.098780487804878,0.0904165593820064
+"Mitigating","Mitigating","Mitigating","Mitigating",128,0.0644112722252001,0.0348422808613891,0.0747182669213261

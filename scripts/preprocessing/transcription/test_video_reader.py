@@ -9,7 +9,7 @@ from video_reader import VideoCSVReader
 
 
 class VideoCSVReaderTests(unittest.TestCase):
-    def test_read_videos_filters_missing_mp4(self) -> None:
+    def test_read_videos_rejects_missing_mp4(self) -> None:
         with tempfile.TemporaryDirectory() as tmpdir:
             root = Path(tmpdir)
             csv_path = root / "videos.csv"
@@ -25,9 +25,8 @@ class VideoCSVReaderTests(unittest.TestCase):
                 writer.writerow({"platform_video_id": "100", "author_name": "A", "title": "T1", "description": "", "published_at": "", "matched_queries": ""})
                 writer.writerow({"platform_video_id": "200", "author_name": "B", "title": "T2", "description": "", "published_at": "", "matched_queries": ""})
 
-            rows = VideoCSVReader(str(csv_path), str(video_dir)).read_videos()
-            self.assertEqual(len(rows), 1)
-            self.assertEqual(rows[0].platform_video_id, "100")
+            with self.assertRaises(FileNotFoundError):
+                VideoCSVReader(str(csv_path), str(video_dir)).read_videos()
 
 
 if __name__ == "__main__":

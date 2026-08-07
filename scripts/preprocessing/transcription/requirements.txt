@@ -1,2 +1,4 @@
 dashscope
 tqdm
+aiohttp
+certifi

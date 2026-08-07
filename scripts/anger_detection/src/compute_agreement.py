@@ -24,8 +24,6 @@ POSITIVE_VALUES = {
     "y",
     "true",
     "t",
-    "pos",
-    "positive",
 }
 
 NEGATIVE_VALUES = {
@@ -39,8 +37,6 @@ NEGATIVE_VALUES = {
     "n",
     "false",
     "f",
-    "neg",
-    "negative",
 }
 
 
@@ -130,8 +126,12 @@ def main() -> int:
 
     y_a = valid["_a"].astype(int)
     y_b = valid["_b"].astype(int)
+    if y_a.nunique() < 2 or y_b.nunique() < 2:
+        raise ValueError("两位标注员的有效标签都必须同时包含 0 和 1")
 
     kappa = float(cohen_kappa_score(y_a, y_b))
+    if not np.isfinite(kappa):
+        raise ValueError("Cohen's Kappa 不是有限数值")
     cm = confusion_matrix(y_a, y_b, labels=[0, 1])
 
     disagreement = valid[y_a != y_b].copy()

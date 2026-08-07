@@ -76,7 +76,7 @@ def test_search_job_filters_old_videos_and_auto_crawls_comments(tmp_path, monkey
         platform=Platform.DOUYIN,
         query_type=QueryType.KEYWORD,
         query="新能源",
-        time_range="2025-01-01:",
+        time_range="2025-01-01/",
         limit=10,
         run_now=True,
     )
@@ -102,7 +102,7 @@ def test_snapshot_export_writes_latest_files(tmp_path, monkeypatch):
         platform=Platform.DOUYIN,
         query_type=QueryType.KEYWORD,
         query="新能源",
-        time_range="2025-01-01:",
+        time_range="2025-01-01/",
         limit=10,
         run_now=True,
     )

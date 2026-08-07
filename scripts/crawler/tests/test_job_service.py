@@ -391,7 +391,7 @@ def test_comments_job_stops_when_cursor_repeats():
     events = db.query(CrawlEvent).filter(CrawlEvent.event_type == "comments_cursor_repeated").all()
     comments = db.query(Comment).all()
 
-    assert job.status.value == "completed"
+    assert job.status.value == "failed"
     assert len(comments) == 1
     assert len(events) == 1
 

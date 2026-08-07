@@ -1,0 +1,10 @@
+"visual_main_arousal_label","text_arousal_label","visual_label_en","text_label_en","predicted_anger_rate","ci_low","ci_high"
+"Intensifying","Intensifying","Intensifying","Intensifying",0.141663110143071,0.110456891459955,0.179902656363951
+"Informational","Intensifying","Informational","Intensifying",0.144910923411309,0.111341661796026,0.186477424095724
+"Mitigating","Intensifying","Mitigating","Intensifying",0.100060026780725,0.0686121816669246,0.143697916070002
+"Intensifying","Informational","Intensifying","Informational",0.128411638016167,0.0898416521107898,0.180260651321768
+"Informational","Informational","Informational","Informational",0.126612742306851,0.102828673195788,0.154947921540473
+"Mitigating","Informational","Mitigating","Informational",0.0986640471272876,0.0764611340349867,0.126431647308113
+"Intensifying","Mitigating","Intensifying","Mitigating",0.110785320267775,0.0775356194349046,0.155884037388594
+"Informational","Mitigating","Informational","Mitigating",0.113584931484452,0.0980445096588701,0.131230182415732
+"Mitigating","Mitigating","Mitigating","Mitigating",0.0644112722617089,0.0534139014699069,0.0774875370460767

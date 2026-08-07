@@ -24,6 +24,7 @@ STANDARD_COLUMNS = [
     "video_id",
     "user_id",
     "parent_id",
+    "comment_level",
     "likes",
 ]
 
@@ -43,7 +44,8 @@ COLUMN_CANDIDATES: Dict[str, List[str]] = {
     "post_id": ["post_id", "postid", "帖子id", "note_id", "aweme_id"],
     "video_id": ["video_id", "videoid", "视频id", "item_id", "aweme_id"],
     "user_id": ["user_id", "userid", "uid", "作者id", "用户id"],
-    "parent_id": ["parent_id", "reply_to", "root_id", "上级评论id"],
+    "parent_id": ["parent_id", "parent_comment_id", "reply_to", "reply_to_comment_platform_id", "上级评论id"],
+    "comment_level": ["comment_level", "level", "评论层级"],
     "likes": ["likes", "like_count", "点赞", "点赞数", "upvotes"],
 }
 
@@ -58,11 +60,6 @@ def parse_args() -> argparse.Namespace:
         "--report-path",
         default="outputs/logs/preprocess_report.json",
         help="预处理报告输出路径",
-    )
-    parser.add_argument(
-        "--create-mock-if-missing",
-        action="store_true",
-        help="若 input-dir 无原始文件，自动生成 mock 数据后继续",
     )
     return parser.parse_args()
 
@@ -105,53 +102,6 @@ def find_column(df: pd.DataFrame, candidates: List[str]) -> Optional[str]:
         if key in norm_to_original:
             return norm_to_original[key]
     return None
-
-
-def guess_text_column(df: pd.DataFrame) -> Optional[str]:
-    object_like = [c for c in df.columns if df[c].dtype == "object"]
-    if not object_like:
-        return None
-    # Pick column with max non-empty string ratio.
-    best_col = None
-    best_score = -1.0
-    for col in object_like:
-        series = df[col].fillna("").astype(str).str.strip()
-        score = (series != "").mean()
-        if score > best_score:
-            best_score = score
-            best_col = col
-    return best_col
-
-
-def create_mock_raw_data(input_dir: Path) -> Path:
-    input_dir.mkdir(parents=True, exist_ok=True)
-    mock_path = input_dir / "mock_raw.csv"
-    mock_df = pd.DataFrame(
-        {
-            "id": [1, 2, 3, 4, 5, 6],
-            "content": [
-                "真是气死我了，这也太离谱了！",
-                "今天有点难过。",
-                "[笑哭][笑哭]",
-                "这个功能一般般。",
-                "你们必须给个说法！",
-                "   ",
-            ],
-            "time": [
-                "2026-03-01 12:00:00",
-                "2026-03-01 12:05:00",
-                "2026-03-01 12:10:00",
-                "2026-03-02 08:00:00",
-                "2026-03-02 08:30:00",
-                "2026-03-02 09:00:00",
-            ],
-            "video_id": ["v1", "v1", "v2", "v2", "v3", "v3"],
-            "user_id": ["u1", "u2", "u3", "u4", "u5", "u6"],
-            "likes": [10, 2, 0, 1, 5, 0],
-        }
-    )
-    mock_df.to_csv(mock_path, index=False, encoding="utf-8-sig")
-    return mock_path
 
 
 def is_emoji_char(ch: str) -> bool:
@@ -203,10 +153,7 @@ def map_and_unify(df: pd.DataFrame, source_name: str) -> pd.DataFrame:
         mapped[target_col] = find_column(df, candidates)
 
     if mapped["raw_text"] is None:
-        guessed = guess_text_column(df)
-        if guessed is None:
-            raise ValueError(f"文件 {source_name} 无法识别文本列，请检查源数据列名")
-        mapped["raw_text"] = guessed
+        raise ValueError(f"文件 {source_name} 无法识别文本列，请检查源数据列名")
 
     out = pd.DataFrame(index=df.index)
     for col in STANDARD_COLUMNS:
@@ -215,11 +162,13 @@ def map_and_unify(df: pd.DataFrame, source_name: str) -> pd.DataFrame:
         src_col = mapped.get(col)
         out[col] = df[src_col] if src_col is not None else pd.NA
 
-    if mapped.get("id") is None:
-        out["id"] = [
-            generate_stable_id(source_name=source_name, row_idx=i, text=str(t))
-            for i, t in enumerate(out["raw_text"].fillna(""), start=1)
-        ]
+    ids = out["id"].astype("string").str.strip()
+    invalid_ids = ids.isna() | ids.str.lower().isin({"", "nan", "none", "<na>"})
+    generated_ids = [
+        generate_stable_id(source_name=source_name, row_idx=i, text=str(t))
+        for i, t in enumerate(out["raw_text"].fillna(""), start=1)
+    ]
+    out["id"] = ids.mask(invalid_ids, pd.Series(generated_ids, index=out.index)).astype(str)
 
     out["clean_text"] = out["raw_text"].fillna("").astype(str).map(clean_text)
     out["likes"] = pd.to_numeric(out["likes"], errors="coerce")
@@ -242,11 +191,26 @@ def preprocess_dataframe(df: pd.DataFrame) -> tuple[pd.DataFrame, Dict[str, int]
     report_counts["removed_empty_after_clean"] = int(empty_clean.sum())
     cleaned = cleaned.loc[~empty_clean].copy()
 
+    level_values = pd.to_numeric(cleaned["comment_level"], errors="coerce")
+    if level_values.notna().any():
+        unknown_levels = cleaned["comment_level"].notna() & level_values.isna()
+        if unknown_levels.any():
+            raise ValueError("comment_level 含无法识别的值")
+        is_first_level = level_values.eq(1)
+    else:
+        parent = cleaned["parent_id"].astype("string").str.strip()
+        has_parent_indicator = parent.notna().any()
+        is_first_level = parent.isna() | parent.str.lower().isin({"", "nan", "none", "<na>"})
+        if not has_parent_indicator:
+            is_first_level = pd.Series(True, index=cleaned.index)
+    report_counts["removed_non_first_level"] = int((~is_first_level).sum())
+    cleaned = cleaned.loc[is_first_level].copy()
+
     only_symbol = cleaned["clean_text"].map(is_only_emoji_or_symbol)
     report_counts["only_emoji_or_symbol_count"] = int(only_symbol.sum())
 
     before_dedup = len(cleaned)
-    cleaned = cleaned.drop_duplicates(subset=["clean_text"], keep="first")
+    cleaned = cleaned.drop_duplicates(subset=["id"], keep="first")
     report_counts["removed_duplicates"] = int(before_dedup - len(cleaned))
     report_counts["row_count_after_clean"] = int(len(cleaned))
 
@@ -262,15 +226,8 @@ def main() -> int:
     input_dir.mkdir(parents=True, exist_ok=True)
 
     data_files = find_data_files(input_dir)
-    if not data_files and args.create_mock_if_missing:
-        mock_path = create_mock_raw_data(input_dir)
-        print(f"[INFO] 未发现原始数据，已生成 mock: {mock_path}")
-        data_files = [mock_path]
-
     if not data_files:
-        raise FileNotFoundError(
-            f"在 {input_dir} 下未找到 csv/xlsx 原始文件。可使用 --create-mock-if-missing 先演示流程。"
-        )
+        raise FileNotFoundError(f"在 {input_dir} 下未找到 csv/xlsx 原始文件")
 
     unified_frames = []
     per_file_rows: Dict[str, int] = {}

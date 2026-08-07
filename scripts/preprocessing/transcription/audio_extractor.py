@@ -12,7 +12,7 @@ class AudioExtractor:
 
     def extract_audio(self, video_path: str, video_id: str, overwrite: bool = False) -> str:
         output_path = self.output_dir / f"{video_id}.mp3"
-        if output_path.exists() and not overwrite:
+        if output_path.is_file() and output_path.stat().st_size > 0 and not overwrite:
             return str(output_path)
 
         command = [
@@ -33,4 +33,6 @@ class AudioExtractor:
             str(output_path),
         ]
         subprocess.run(command, check=True)
+        if not output_path.is_file() or output_path.stat().st_size == 0:
+            raise RuntimeError(f"音频提取结果为空: {output_path}")
         return str(output_path)

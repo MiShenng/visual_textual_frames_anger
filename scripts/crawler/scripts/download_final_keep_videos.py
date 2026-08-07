@@ -12,7 +12,7 @@ from app.platforms.schemas import CrawlContext
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_SOURCE_CSV = Path("data/processed/video_level_final_449.csv")
+DEFAULT_SOURCE_CSV = Path("data/processed/video_level_master_449.csv")
 DEFAULT_TARGET_DIR = Path("data/raw/videos_source/douyin")
 DEFAULT_STATUS_PATH = Path("outputs/crawler/download_logs/final_keep_chunked_download_status.json")
 DEFAULT_FAILED_CSV = Path("outputs/crawler/download_logs/final_keep_chunked_download_failed.csv")
@@ -229,6 +229,7 @@ def fetch_chunk_base64(page, url: str, start: int, end: int, fetch_timeout_ms: i
               ok: res.ok,
               status: res.status,
               len: bytes.length,
+              contentRange: res.headers.get('content-range'),
               base64: btoa(binary),
             };
           } catch (error) {
@@ -246,9 +247,19 @@ def fetch_chunk_base64(page, url: str, start: int, end: int, fetch_timeout_ms: i
         """,
         {"url": url, "start": start, "end": end, "timeoutMs": fetch_timeout_ms},
     )
-    if not payload.get("ok"):
+    expected_length = end - start + 1
+    expected_range_prefix = f"bytes {start}-{end}/"
+    if (
+        not payload.get("ok")
+        or payload.get("status") != 206
+        or payload.get("len") != expected_length
+        or not str(payload.get("contentRange") or "").startswith(expected_range_prefix)
+    ):
         raise RuntimeError(f"chunk_fetch_failed:{payload}")
-    return base64.b64decode(payload["base64"])
+    chunk = base64.b64decode(payload["base64"])
+    if len(chunk) != expected_length:
+        raise RuntimeError(f"chunk_size_mismatch:{len(chunk)}!={expected_length}")
+    return chunk
 
 
 def download_single_video(
@@ -287,8 +298,9 @@ def download_single_video(
         chunk_index = 0
         while start < total:
             end = min(start + chunk_size - 1, total - 1)
-            handle.write(fetch_chunk_base64(page, src, start, end, fetch_timeout_ms=fetch_timeout_ms))
-            downloaded_bytes += end - start + 1
+            chunk = fetch_chunk_base64(page, src, start, end, fetch_timeout_ms=fetch_timeout_ms)
+            handle.write(chunk)
+            downloaded_bytes += len(chunk)
             chunk_index += 1
             if progress_callback and (chunk_index == 1 or chunk_index % 10 == 0 or downloaded_bytes == total):
                 progress_callback(
@@ -453,7 +465,7 @@ def main() -> int:
     status["finished_at"] = time.strftime("%Y-%m-%d %H:%M:%S")
     write_status()
     print(json.dumps({"stage": "download_end", **status}, ensure_ascii=False), flush=True)
-    return 0
+    return 1 if unresolved_failed_ids(failed_reasons, target_dir, attempts) else 0
 
 
 if __name__ == "__main__":

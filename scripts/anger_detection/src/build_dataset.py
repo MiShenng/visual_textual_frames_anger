@@ -24,8 +24,6 @@ POSITIVE_VALUES = {
     "y",
     "true",
     "t",
-    "pos",
-    "positive",
 }
 
 NEGATIVE_VALUES = {
@@ -39,8 +37,6 @@ NEGATIVE_VALUES = {
     "n",
     "false",
     "f",
-    "neg",
-    "negative",
 }
 
 
@@ -161,7 +157,11 @@ def main() -> int:
 
     work = df.copy()
     if args.id_col not in work.columns:
-        work[args.id_col] = [f"auto_{i+1}" for i in range(len(work))]
+        raise ValueError(f"输入文件缺少样本 ID 列: {args.id_col}")
+    ids = work[args.id_col].astype("string").str.strip()
+    if ids.isna().any() or ids.eq("").any() or ids.duplicated().any():
+        raise ValueError(f"{args.id_col} 必须非空且唯一")
+    work[args.id_col] = ids
 
     work[args.text_col] = work[args.text_col].fillna("").astype(str).str.strip()
     work["label"] = work[args.label_col].map(normalize_binary_label)
