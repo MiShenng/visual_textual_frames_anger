@@ -6,7 +6,7 @@ This repository contains the public replication materials for:
 >
 > Accepted by the AEJMC 2026 Visual Communication Division.
 
-The accepted paper is available here, clicking it if you like!
+The accepted paper is available here, clicking it if you like! [PDF](AEJMC_VISC_FP-19-9246.pdf)
 
 ## Study Overview
 
