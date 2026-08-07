@@ -10,7 +10,7 @@ The accepted paper is available here, clicking it if you like! [PDF](AEJMC_VISC_
 
 ## Selected Tables
 
-![Table 1. Visual coding examples](results/figures/table1_visual_coding_examples.svg)
+![Table 1. Visual coding examples](results/figures/table1_visual_coding_examples.png)
 
 ![Table 2. Training parameters and classification performance of the BERT sentiment classification model](results/figures/table2_bert_training_performance.svg)
 
